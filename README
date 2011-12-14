@@ -1,1 +1,3 @@
-This is the root.
+The 'site' level (elc) settings.py isn't included due to apache's mod_wsgi needing it's own config (settings_production.py in apache dir).
+
+If invoking manage.py complains it can't find settings.py, you can copy the contents of settings_production.py into a settings.py file located in the 'elc' dir. However, meaningful updates need to go into settings_production.py.
