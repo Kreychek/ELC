@@ -1,0 +1,35 @@
+{% extends "/home/django/templates/records/extra_css.html" %}
+{% block extra_css %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.formset.js"></script>
+<script type="text/javascript">
+    $(function() {
+       $('#lpCalcForm tbody tr').formset();
+    })
+</script>
+<script type="text/javascript" >
+    $(function(){
+        setAutoComplete("typeid", "type_results", "/lp_lookup/?query=");
+    });
+</script>
+{% endblock %}
+
+{% block body %}
+    
+    
+<form id="lpCalcForm" method="post" action="">
+    {% csrf_token %}
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tbody>
+            {% for form in formset.forms %}
+            <tr>
+                <td>{{ form.item }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {{ formset.management_form }}
+    
+    <input type="submit" value="Submit">
+</form>
+{% endblock %}

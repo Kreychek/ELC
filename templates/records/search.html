@@ -1,0 +1,27 @@
+{% extends "/home/django/templates/records/extra_css.html" %}
+{% block body %}
+<font face="verdana" size=2>
+    
+<form method="get">
+<div>
+{% include "/home/django/templates/records/lookup.html" %}<input type="submit" value="Search" />
+</div>
+</form>
+
+Searching is not case-sensitive and performs a logical AND on all terms.
+{% if query_string %}
+<p>The number in parentheses is outstanding market orders.<br>
+<p>You searched for: "{{ query_string }}"<br>
+{% endif %}
+
+{% if found_entries %}
+    <p>Results:<br>
+    {% for entry in found_entries %}
+        <li><a href="/records/type_detail/{{ entry.typeID }}">{{ entry.typeName }}</a> ({{ entry.marketrecord_set.count }})</li>
+    {% endfor %}
+{% endif %}
+
+</p>
+</font>
+
+{% endblock %}

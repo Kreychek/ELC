@@ -1,0 +1,17 @@
+<html>
+    <body>
+        <form method="get" action="">
+            {{ formset.management_form }}
+            <table>
+                {% for form in formset %}
+                    {{ form.item_name }}
+                    {{ form.as_p }}
+                {% endfor %}
+            </table>
+            <input type="submit" value="Submit">
+            <input type=hidden name='step' value='2'/>
+            <input type=hidden name='items' value='{% for i in items %}{{ i|safe }};{% endfor %}'/>
+            <input type=hidden name='spendable' value='{{ spendable }}'/>
+        </form>
+    </body>
+</html>

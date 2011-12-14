@@ -1,0 +1,32 @@
+{% load pretty_numbers %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
+{% if item %}
+<font face=verdana>
+<p><h2>{{ item.typeName }}</h2></p>
+<font size=2>
+<h3>Statistics</h3>
+    Median buy price: {{ item.medianBuyPrice|addcommas:"N/A" }}<br>
+    Mean buy price: {{ item.meanBuyPrice|addcommas:"N/A" }}<br>
+    High buy price: {{ item.highBuyPrice|addcommas:"N/A" }}<br>
+    Low buy price: {{ item.lowBuyPrice|addcommas:"N/A" }}<br>
+    <br>
+    Median sell price: {{ item.medianSellPrice|addcommas:"N/A" }}<br>
+    Mean sell price: {{ item.meanSellPrice|addcommas:"N/A" }}<br>
+    High sell price: {{ item.highSellPrice|addcommas:"N/A" }}<br>
+    Low sell price: {{ item.lowSellPrice|addcommas:"N/A" }}<br>
+<p>
+    <h3>Attributes</h3>
+    <table border="1">
+    {% for key, val in attrs.items %}
+        <tr><td><font size=2>{{ key }}</font></td><td><font size=2>{{ val }}</font></td></tr>
+    {% endfor %}
+    </table>
+</p>
+</font>
+</font>
+{% endif %}
+{% load django_tables2 %}
+<font face=verdana><h3>Buyers</h3></font>
+{% render_table buy %}
+<font face=verdana><h3>Sellers</h3></font>
+{% render_table sell %}

@@ -1,0 +1,14 @@
+<html>
+    <head>
+    </head>
+    <body>
+        <form method="get" action="{% url marketanalyzer.views.lp_calc %}">
+         Selection: {{ form.item }}<br>
+         Spendable LP: {{ form.spendable }}<br>
+         {% if not formset %}
+            <input type="submit" value="Submit" />
+        {% endif %}
+        <input type=hidden name='step' value='1'/>
+        </form>
+    </body>
+</html>

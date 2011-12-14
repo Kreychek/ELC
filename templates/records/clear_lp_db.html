@@ -1,0 +1,12 @@
+Clear all market records and associated statistics from database?
+<br>
+<form method="post">
+{% csrf_token %} 
+<input type="submit" value="Clear DB" />
+</form>
+
+{% if messages %}
+{% for msg in messages %}
+<b>{{ msg }}</b>
+{% endfor %}
+{% endif %}

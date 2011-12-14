@@ -1,0 +1,52 @@
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/main.css" />
+
+<p>Upload an exported market dump from our utility.
+<form method="post" action="{% url marketanalyzer.views.upload %}" enctype="multipart/form-data" id="upload_form">{% csrf_token %} 
+    <input type="file" id="id_file" name="file" />
+    <input type="submit" name="submit" value="Submit" />
+</form>
+
+{% if messages %}
+    {% for message in messages %}
+    <b>{{ message }}</b>
+    {% endfor %}
+{% endif %}
+
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.uploadProgress.js"></script>
+<script type="text/javascript" charset="utf-8">
+//<![CDATA[
+$(document).ready(function() { 
+    $(function() {
+        $('#upload_form').uploadProgress({
+            jqueryPath: "{{STATIC_URL}}js/jquery.js",
+            progressBar: '#progress_indicator',
+            progressUrl: '{% url upload_progress %}',
+            start: function() {
+                $("#upload_form").hide();
+                filename = $("#id_file").val().split(/[\/\\]/).pop();
+                $("#progress_filename").html('Uploading ' + filename + "...");
+                $("#progress_container").show();
+            },
+            uploadProgressPath: "{{STATIC_URL}}js/jquery.uploadProgress.js",
+            uploading: function(upload) {
+                if (upload.percents == 100) {
+                    window.clearTimeout(this.timer);
+                    $("#progress_filename").html('Processing ' + filename + "...");
+                } else {
+                    $("#progress_filename").html('Uploading ' + filename + ': ' + upload.percents + '%');
+                }
+            },
+            interval: 500
+        });
+    });
+});
+//]]>
+</script>
+
+<div id="progress_container">
+    <div id="progress_filename"></div>
+    <div id="progress_bar">
+        <div id="progress_indicator"></div>
+    </div>
+</div>

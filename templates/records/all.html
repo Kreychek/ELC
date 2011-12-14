@@ -1,0 +1,11 @@
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
+<font face="verdana" size="1">
+<h1>All Buy and Sell Orders</h1>
+</font>
+<font face="verdana" size="1">
+<h2>Buy Orders</h2></font>
+{% load django_tables2 %}
+{% render_table buy %}
+<font face="verdana" size="1">
+<h2>Sell Orders</h2></font>
+{% render_table sell %}
