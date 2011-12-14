@@ -19,7 +19,8 @@ from marketanalyzer.models import *
 
 logging.basicConfig()
 
-# TO DO: validate all forms/input
+# TO DO: -validate all forms/input
+#        -color code stuff!
 
 # How kosher is this? (placement, usage of a global at all, etc)
 uploadPath = '/home/django/upload/'
@@ -339,7 +340,14 @@ class DetailTable(RecordTable):
 #        -remove some irrelevant columns from tables
 #        -paginate results
 #        -combine the all* views into one
-#        -humanize data (add commas to large numbers, etc)
+#        -add total volumes for currently buying/selling
+#        -add movement of units
+#        -filter by age of data, min qty
+#        -color code security rating
+#        -add best price for buy/sell globally, and for jita
+#        -display position of type in market group hierarchy
+#        --allow navigation through group hierarchy
+#        --show meta levels, jita prices, +/-20% jita prices, jita avg qty/day over last 30 days
 
 # View that provides buy and sell tables of all market orders of a single item
 # type, as well as attributes of that item (e.g. duration, hp, etc)
@@ -348,11 +356,31 @@ def type_detail(request, type_id):
         item = invTypes.objects.get(pk=type_id)
     except invTypes.DoesNotExist:
         raise Http404   # perhaps display a more informative page
-    
+
     # Dict to hold the attributes of the item in question
     attrs = {}
     
-    # Fill dict with attribute names as keys, and the int/float as values
+    stat_types = ['Median price',
+                  'Mean price',
+                  'High price',
+                  'Low price',
+                  'Std deviation',
+                  'Variance']
+    
+    # These 2 dicts' key-val pairs are used literally in the template
+    buy_stats = dict(zip(stat_types, (item.medianBuyPrice, item.meanBuyPrice,
+                                      item.highBuyPrice, item.lowBuyPrice,
+                                      item.stdDevBuy, item.varianceBuy)))
+    
+    print 'buy_stats:', buy_stats
+                     
+    sell_stats = dict(zip(stat_types, (item.medianSellPrice, item.meanSellPrice,
+                                      item.highSellPrice, item.lowSellPrice,
+                                      item.stdDevSell, item.varianceSell)))
+    
+    print 'sell_stats', sell_stats
+    
+    # Fill attr dict with attribute names as keys, and the int/float as values
     # Each attribute should have either an int or a float value, not both
     for x in dgmTypeAttributes.objects.filter(typeID=item.typeID):
         if x.valueInt:
@@ -384,8 +412,9 @@ def type_detail(request, type_id):
                         prefix='s-', order_by=sOrder)
     
     return render_to_response('records/type_detail.html',
-                              { 'buy': buy, 'sell': sell, 'item': item,
-                               'attrs': attrs },
+                              { 'buy': buy, 'sell': sell,
+                               'buy_stats': buy_stats, 'sell_stats': sell_stats,
+                               'attrs': attrs, 'item': item },
                               context_instance=RequestContext(request))
 
 # View to show every buy order in the database.
@@ -673,6 +702,8 @@ class LPCalcResultsTable(tables.Table):
 
 # Accepts iterable of typeID, regionID, and __priceStats.
 # Returns a dict containing table data each type, to fill an LPCalcResultsTable.
+#
+# TO DO: figure out other_fee (currently set to 0)
 def calculate_profits(items, region, stat, spendable):
     count = len(items)
     data = list()
@@ -739,6 +770,7 @@ def calculate_profits(items, region, stat, spendable):
 # are split up into 3 templates, each holding a hidden input denoting which
 # step it corresponds to. Item(s) and spendable LP are written to the HTML upon
 # render and stuck into 'items' and 'spendable' hidden inputs, respectively.
+# 'items' are stored with a semi-colon following each typeID in the HTML.
 def lp_calc(request):
     if request.method == 'GET':
         print '** lp_calc: GET:', request.GET

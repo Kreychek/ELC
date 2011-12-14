@@ -1,37 +1,47 @@
 {% load django_tables2 %}
 {% load pretty_numbers %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
-{% if item %}
-<font face=verdana>
-<p><h2>{{ item.typeName }}</h2></p>
-<font size=2>
-<h3>Statistics</h3>
-    Median buy price: {{ item.medianBuyPrice|addcommas:"N/A" }}<br>
-    Mean buy price: {{ item.meanBuyPrice|addcommas:"N/A" }}<br>
-    High buy price: {{ item.highBuyPrice|addcommas:"N/A" }}<br>
-    Low buy price: {{ item.lowBuyPrice|addcommas:"N/A" }}<br>
-    StdDev of buy price: {{ item.stdDevBuy|addcommas:"N/A" }}<br>
-    Variance of buy price: {{ item.varianceBuy }}<br>
-    <br>
-    Median sell price: {{ item.medianSellPrice|addcommas:"N/A" }}<br>
-    Mean sell price: {{ item.meanSellPrice|addcommas:"N/A" }}<br>
-    High sell price: {{ item.highSellPrice|addcommas:"N/A" }}<br>
-    Low sell price: {{ item.lowSellPrice|addcommas:"N/A" }}<br>
-    StdDev of sell price: {{ item.stdDevSell|addcommas:"N/A" }}<br>
-    Variance sell price: {{ item.varianceSell }}<br>
-<p>
-    <h3>Attributes</h3>
-    <table border="1">
-    {% for key, val in attrs.items %}
-        <tr><td><font size=1>{{ key }}</font></td><td><font size=1>{{ val }}</font></td></tr>
-    {% endfor %}
-    </table>
-</p>
-</font>
-</font>
-{% endif %}
-
-<font face=verdana><h3>Buyers</h3></font>
-{% render_table buy %}
-<font face=verdana><h3>Sellers</h3></font>
-{% render_table sell %}
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
+        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base.css" />
+    </head>
+    <body>
+        <h1>{{ item.typeName }}</h1>
+        <h2>Statistics</h2>
+        <div class="detail-stats">
+            <table>
+                <caption>Buy Orders</caption>
+                <tr class="even"><td class="stats-cat">Mean price</td><td class="stats-val">{{ item.meanBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
+                <tr class="odd"><td class="stats-cat">Median price</td><td class="stats-val">{{ item.medianBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
+                <tr class="even"><td class="stats-cat">High price</td><td class="stats-val">{{ item.highBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
+                <tr class="odd"><td class="stats-cat">Low price</td><td class="stats-val">{{ item.lowBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
+                <tr class="even"><td class="stats-cat">Std deviation</td><td class="stats-val">{{ item.stdDevBuy|comma_trunc:"N/A"|isk }}</td></tr>
+                <tr class="odd"><td class="stats-cat">Variance</td><td class="stats-val">{{ item.varianceBuy|floatformat:2 }}</td></tr>
+            </table>
+            <br>
+            <table>
+                <caption>Sell Orders</caption>
+                <tr class="even"><td class="stats-cat">Mean price</td><td class="stats-val">{{ item.meanSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
+                <tr class="odd"><td class="stats-cat">Median price</td><td class="stats-val">{{ item.medianSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
+                <tr class="even"><td class="stats-cat">High price</td><td class="stats-val">{{ item.highSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
+                <tr class="odd"><td class="stats-cat">Low price</td><td class="stats-val">{{ item.lowSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
+                <tr class="even"><td class="stats-cat">Std deviation</td><td class="stats-val">{{ item.stdDevSell|comma_trunc:"N/A"|isk }}</td></tr>
+                <tr class="odd"><td class="stats-cat">Variance</td><td class="stats-val">{{ item.varianceSell|floatformat:2 }}</td></tr>
+            </table>
+        </div>
+        
+        <div class="attributes">
+            <h2>Attributes</h2>
+            <table class="attr">
+                {% for key, val in attrs.items %}
+                <tr class="{% cycle 'even' 'odd' %}"><td class="attr-cat">{{ key }}</td><td class="attr-val">{{ val }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+        
+        <h2>Buyers</h2>
+        {% render_table buy %}
+        <h2>Sellers</h2>
+        {% render_table sell %}
+    </body>
+</html>
