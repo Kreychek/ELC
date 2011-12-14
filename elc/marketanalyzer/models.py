@@ -349,7 +349,7 @@ class MarketRecord(models.Model):
         
     was_updated_today.short_description = 'Updated today?'
 
-# TO DO: Add FK for itemName and/or typeID, so we can resolve those from templates, etc
+# TO DO: Add FK for itemName and/or typeID, so we can easily resolve those from templates, etc
 class LPReward(models.Model):
     """LP Store entries for each item, containing Corporation, Reward Name, QTY, LP Cost, ISK Cost, Req'd Items"""
     corp = models.CharField('Corporation', max_length=100)

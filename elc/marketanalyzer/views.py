@@ -21,10 +21,10 @@ logging.basicConfig()
 
 # TO DO: validate all forms/input
 
-# how kosher is this? (placement, usage of a global at all, etc)
+# How kosher is this? (placement, usage of a global at all, etc)
 uploadPath = '/home/django/upload/'
 
-# convert dumper's timestamp to a python datetime object
+# Convert dumper's timestamp to a python datetime object.
 def convTS(ts):
     # dumper TS is the number of 100-nanosecond intervals since Jan. 1, 1600
     # we convert here to a 32-bit representation of seconds since 1-1-1970
@@ -32,8 +32,8 @@ def convTS(ts):
     return datetime.datetime.fromtimestamp(((int(ts) - 116444736000000000) /
                                              10000000))
 
-# convert strings representing bools in export files to real boolean vals
-# (for use with CSV exports)
+# Convert strings representing bools in export files to Python boolean objects
+# (for use with CSV exports).
 def str2bool(val):
     if ( val == 'True' ):
         return True
@@ -43,7 +43,7 @@ def str2bool(val):
 class UploadFileForm(forms.Form):
     file  = forms.FileField()
 
-# accept an upload with market data
+# Accept an uploaded file that contains market orders in our CSV format.
 def upload(request):
     if request.method == 'POST':
         print '** POST method determined.'
@@ -65,12 +65,12 @@ def upload(request):
     return render_to_response('records/upload.html', {'form': form},
                               context_instance=RequestContext(request))
 
-# !! Dev server isn't multithreaded, so won't see progress update requests while
+# !! (?) Dev server isn't multithreaded, so won't see progress update requests while
 # receiving the file. Even when using an MT patch (threadedmanage.py) to run it
 # this functionality requires other things that are best left for a linux
 # apache server.
 
-# view to present upload progress to AJAX
+# View to present upload progress to AJAX in upload view.
 def upload_progress(request):
     """
     Return JSON object with information about the progress of an upload.
@@ -93,8 +93,8 @@ def upload_progress(request):
     else:
         return HttpResponseBadRequest('Server Error: You must provide X-Progress-ID header or query param.')
 
-# write contents of an uploaded file to server's drive and then call insertion
-# method
+# Write contents of an uploaded file to server's disk and then call
+# insert_to_db.
 # TO DO: -delete uploaded files after X time has passed?
 #        -rename new file if filename in use?
 #        --tie into uniqueness check on orders?
@@ -112,8 +112,7 @@ def handle_uploaded_file(f):
     #else:
     #    print "!! Aborting due to file already existing:", path
 
-# insert a file on the server containing market data (dumper format) into
-# the DB
+# Insert a file on the server containing market orders into the database.
 # TO DO: handle problem of multiple people uploading data on same order
 #        -consider checking orderID, if matches, check order contents,
 #          and if they match, then don't add order
@@ -197,10 +196,10 @@ def insert_to_db(f):
     #print '** types:', types
     compute_price_data(types)
 
-# expects a set of typeIDs whose stats need to be computed
+# Accepts a set of typeIDs.
+# Computes global price statistics on items passed to it.
 def compute_price_data(types):
     print '========== compute_price_data =========='
-        
     
     for t in types:
         print '** Computing for type:', t
@@ -270,7 +269,7 @@ def compute_price_data(types):
             x = modified(typeID=item.typeID)
             x.save()
 
-# table to contain market records of (potentially) multiple types
+# Table to display market records of (potentially multiple) types.
 class RecordTable(tables.Table):
     # since MarketRecord doesn't directly hold typeName, we must override the
     #  accessor to follow the FK to get it
@@ -310,7 +309,7 @@ class RecordTable(tables.Table):
         sequence = ('security', 'regionName', 'stationName',
                     'type_name', 'price', 'volEntered', 'volRemaining', '...')
 
-# table of order info for the type_detail view
+# Table of order info used by the type_detail view.
 class DetailTable(RecordTable):
     regionName = tables.Column(accessor='stationID.regionID.regionName')
     solarSystemName = tables.Column(accessor='stationID.solarSystemID.solarSystemName',
@@ -342,7 +341,8 @@ class DetailTable(RecordTable):
 #        -combine the all* views into one
 #        -humanize data (add commas to large numbers, etc)
 
-# provides buy and sell tables of all market orders of a single item type
+# View that provides buy and sell tables of all market orders of a single item
+# type, as well as attributes of that item (e.g. duration, hp, etc)
 def type_detail(request, type_id):
     try:
         item = invTypes.objects.get(pk=type_id)
@@ -388,7 +388,7 @@ def type_detail(request, type_id):
                                'attrs': attrs },
                               context_instance=RequestContext(request))
 
-# show every buy order in the DB
+# View to show every buy order in the database.
 def all_buy(request):
     # by default, sort by descending price
     if ( request.GET.get('sort') ):
@@ -401,7 +401,7 @@ def all_buy(request):
     return render_to_response('records/all_buy.html', {'table': table},
                               context_instance=RequestContext(request))
 
-# show every sell order in the DB
+# View to show every sell order in the database.
 def all_sell(request):
     # by default, sort by ascending price
     if ( request.GET.get('sort') ):
@@ -418,7 +418,7 @@ def all_sell(request):
 # probably won't regularly use the "all" view, and paginating requires more work
 # with multiple tables so hold off?
 
-# show ALL orders in the DB
+# View to show all market orders in the database.
 def all(request):
     # by default, sort buy orders by descending price
     if ( request.GET.get('b-sort') ):
@@ -445,6 +445,8 @@ def all(request):
 # TO DO: This is slow b/c of the invType work, consider tracking types that
 #        have had their *price fields edited.
 #        May be a waste of time since this will rarely be run in production env.
+
+# View to allow the clearing of market orders database.
 def clear_db(request):
     if request.method == 'POST':
         MarketRecord.objects.all().delete()
@@ -472,7 +474,8 @@ def clear_db(request):
                              'All orders and associated stats have been erased!')
     return render_to_response('records/clear_db.html',
                               context_instance=RequestContext(request))
-    
+
+# View to allow the clearing of the LP store database.    
 def clear_lp_db(request):
     if request.method == 'POST':
         LPReward.objects.all().delete()
@@ -501,7 +504,7 @@ def clear_lp_db(request):
     return render_to_response('records/clear_lp_db.html',
                               context_instance=RequestContext(request))
 
-# related to search view
+# Related to search view.
 def normalize_query(query_string,
                     findterms=re.compile(r'"([^"]+)"|(\S+)').findall,
                     normspace=re.compile(r'\s{2,}').sub):
@@ -515,7 +518,7 @@ def normalize_query(query_string,
     return [normspace(' ', (t[0] or t[1]).strip()) for t in
             findterms(query_string)] 
 
-# related to search view
+# Related to search view.
 def get_query(query_string, search_fields):
     ''' Returns a query, that is a combination of Q objects. That combination
         aims to search keywords within a model by testing the given search fields.
@@ -536,7 +539,7 @@ def get_query(query_string, search_fields):
             query = query & or_query
     return query
 
-# view to search by item name, provides template with a list of matching items
+# View to search market orders by item name.
 def search(request):
     #print '** sellable:', sellable
     #print '========= SEARCH ========='
@@ -557,7 +560,8 @@ def search(request):
                               { 'query_string': query_string,
                                'found_entries': found_entries },
                               context_instance=RequestContext(request))
-    
+
+# Table to display results of an LP search.
 class LPResults(tables.Table):
     corp = tables.Column(verbose_name='Corporation')
     itemName = tables.Column(verbose_name='Item')
@@ -567,7 +571,8 @@ class LPResults(tables.Table):
     
     class Meta:
         attrs = {'class': 'paleblue'}
-    
+
+# View to search LP store rewards.
 def lp_search(request):
     query_string = ''
     found_entries = None
@@ -595,24 +600,34 @@ def lp_search(request):
                               context_instance=RequestContext(request))
 
 # LP Calculator:
-# This should probably be done in AJAX or something.
+# Multi-step form currently. Should be converted to AJAX.
 #
 # per item formula:
 #
-# profit[x] = ( sellPrice[x] - store_fee[x] - other_fee[x] ) / LP_cost[x]
+# profit[x] = ( sellPrice[x, (region, stat)] - store_fee[x] - other_fee[x] ) / LP_cost[x]
 #
-# Where:
-# -other_fee could be cost of purchasing T1 ammo to convert to faction)
-# -sellPrice is determined by region & price stat (ex. mean, or high sell, etc)
+# Where...
+# x: item type (e.g. typeID)
+# store_fee: -the ISK cost of the item from the LP store
+# other_fee: -could assume a stat + region. If not, requires region/stat.
+#            (e.g. cost of buying T1 ammo to convert to faction ammo)
+# sellPrice: -determined by region & price stat (e.g. mean buy price)
 
+# TO DO: LP Calc should ask for corp that the LP is for and narrow calcs based on such
 
-# form to get item list for the LP calculator
+# Form to get list of item(s) for the LP calculator.
 class LPCalcItem(forms.Form):
-    item = forms.MultipleChoiceField(choices=LPitems, widget=forms.SelectMultiple(attrs={'size': 30}))
-    spendable = forms.IntegerField()
+    # 'size' attr is height of widget (# of entries visible)
+    item = forms.MultipleChoiceField(choices=LPitems,
+                                     widget=forms.SelectMultiple(
+                                        attrs={'size': 30}))
+    spendable = forms.IntegerField() # the amt of LP available to spend
 
-# to choose the region(s) and price statistic to use in calculations
+# Form to choose the region and price statistic for each item to use in
+# calculations.
 class LPCalcDetails(forms.Form):
+    # Available price stat options. These are all generated by SQL aggregate
+    # functions performed on a filtered query.
     __priceStats = (
         ('meanbp', 'Mean Buy Price'),
         #('medbp', 'Median Buy Price'),
@@ -627,6 +642,7 @@ class LPCalcDetails(forms.Form):
     stat = forms.ChoiceField(choices=__priceStats)
     item_name = ''
 
+# Table to display results of LP calculator. Shown in step 2.
 class LPCalcResultsTable(tables.Table):
     itemName = tables.Column(verbose_name='Item')
     regionName = tables.Column(verbose_name='Region')
@@ -655,9 +671,8 @@ class LPCalcResultsTable(tables.Table):
     class Meta:
         attrs = {'class': 'paleblue'}
 
-# accepts iterables of typeID, regionID, __priceStats,
-# calculates profits for each group of indices in params
-# returns a dict to fill an LPCalcResultsTable
+# Accepts iterable of typeID, regionID, and __priceStats.
+# Returns a dict containing table data each type, to fill an LPCalcResultsTable.
 def calculate_profits(items, region, stat, spendable):
     count = len(items)
     data = list()
@@ -711,24 +726,34 @@ def calculate_profits(items, region, stat, spendable):
                    'profitPer': profit_per, 'profit': profit})
         
     return data
+
+# TO DO: -lp_calc validation!!
+#        -consider storing state as a hash, like Django form wizard
+#        -consider storing state entirely in querystring, so each step can be
+#         bookmarked/pasted to people.
     
-# calculate profits from selling various LP store-bought items in any location
-# given prevailing market conditions
+# View to calculate profits from selling various LP store rewards in any
+# location given prevailing market conditions.
+#
+# State is maintained via hidden input fields. There are 3 steps (0-2), which
+# are split up into 3 templates, each holding a hidden input denoting which
+# step it corresponds to. Item(s) and spendable LP are written to the HTML upon
+# render and stuck into 'items' and 'spendable' hidden inputs, respectively.
 def lp_calc(request):
     if request.method == 'GET':
         print '** lp_calc: GET:', request.GET
 
         form = LPCalcItem(request.GET)
         
-        # 0: no 'step' param, so user must've just gotten here
+        # No 'step' param, so user must've just gotten here and hasn't
+        # inputted anything yet.
         if 'step' not in request.GET:
             print '** On STEP 0...'
-            # The starting point; an form w/o any input
         else:
+            # We're on step 1, so we're getting regions and price stats for
+            # each item selected in step 0.
             if request.GET.get('step') == '1':
                 print '** On STEP 1...'
-                
-                # We now have an item list
                 
                 if form.is_valid():
                     print '** Form validated.'
@@ -744,7 +769,7 @@ def lp_calc(request):
                     
                     spendable = int(request.GET.get('spendable'))
                     
-                    # Get the item name into each form, to use as a label on render
+                    # Get the item name into each form; use as label on render.
                     for form in formset:
                         form.item_name = invTypes.objects.get(pk=item_list[count]).typeName
                         count = count + 1
@@ -752,11 +777,12 @@ def lp_calc(request):
                     return render_to_response('records/lp_calc2.html',
                                               {'formset': formset, 'items': item_list, 'spendable': spendable},
                                               context_instance=RequestContext(request))
+                    
+            # We have the item list and associated region-stat combos,
+            # so perform the required calculations and display the result.
             elif request.GET.get('step') == '2':
                 print '** ON STEP 2...'
                 #print '** GET:', request.GET
-                
-                # We now have an item list, as well as a region-priceStat combo for each item
                 
                 # Recreate the formset as it was made for this particular query
                 LPCalcDetailsFormSet = formset_factory(LPCalcDetails,
@@ -767,14 +793,9 @@ def lp_calc(request):
                     print '** Formset is valid:', formset.data
                     
                     items = request.GET.get('items')
-                    item_count = len(items.split(';')) - 1 # -1 b/c of trailing semi-colon
+                    # -1 b/c last semi-colon adds an empty element
+                    item_count = len(items.split(';')) - 1
                     item_list = items.split(';')[0:item_count]
-                    
-                    #print '** item_list:'
-                    #for i in item_list:
-                    #    print i
-                    
-                    #print '** formset len:', len(formset)
                     
                     form_count = int(request.GET.get('form-TOTAL_FORMS'))
                     
@@ -789,9 +810,9 @@ def lp_calc(request):
                     table_data = calculate_profits(item_list, region, stat, spendable)
                     table = LPCalcResultsTable(table_data)
                     
-                    print 'table_data:'
-                    for k in range(0, len(table_data)):
-                        print str(k) + ':', table_data[k]
+                    #print 'table_data:'
+                    #for k in range(0, len(table_data)):
+                    #    print str(k) + ':', table_data[k]
                     
                     return render_to_response('records/lp_calc3.html',
                                               {'table': table},
@@ -804,7 +825,9 @@ def lp_calc(request):
     return render_to_response('records/lp_calc.html', {'form': form},
                               context_instance=RequestContext(request))
 
-# Type name lookup autocomplete view
+# TO DO: consider combining autocomplete views (add param for filter).
+
+# View for typeName autocompletion.
 def type_lookup(request):
     # Default return list
     results = []
@@ -818,7 +841,7 @@ def type_lookup(request):
     json = simplejson.dumps(results)
     return HttpResponse(json, mimetype='application/json')
     
-# LP lookup autocomplete view
+# View for typeName autocompletion, filtered to return LP rewards only.
 def lp_lookup(request):
     # Default return list
     results2 = []
@@ -832,7 +855,7 @@ def lp_lookup(request):
     json = simplejson.dumps(results2)
     return HttpResponse(json, mimetype='application/json')
     
-# view to handle the importing of LP Store data
+# View to handle the importing of LP store data.
 def import_lp_data(request):
     print '** IN import_lp_data...'
     
@@ -861,17 +884,17 @@ def import_lp_data(request):
                         
                         #print '** RAW row:', row
                         
-                        # parse req'd items list
+                        # Parse required items list
                         if (row[5] != '') & (row[5] != 'Reqired Items'):
                             splitd = re.split(' x ', row[5])
                             reqdCount = len(splitd) - 1
                             #print '** splitd:', splitd
                             
-                            # get first requirement; key = item name, val = qty
+                            # Get first requirement; key = item name, val = qty.
                             if index == 1:
                                 need[splitd[index][0:splitd[index].rfind(' ')]] = splitd[index-1]
                             
-                            # loop through each of the remaining elements
+                            # Loop through each of the remaining elements.
                             while index < len(splitd) - 1:
                                 index = index + 1
                                 if ( index == len(splitd) - 1): # non-first/last items will have item name followed by qty of NEXT item
@@ -879,7 +902,8 @@ def import_lp_data(request):
                                 else:   # last item will be just the item name
                                     need[splitd[index][0:splitd[index].rfind(' ')]] = int(splitd[index-1][splitd[index-1].rfind(' '):len(splitd[index-1])])
                                     
-                            # store req'd items' typeID followed by comma, followed by qty of typeID, followed by comma
+                            # Store req'd items' typeID followed by comma,
+                            # followed by qty of typeID, followed by comma.
                             for key in need:
                                 reqItems = reqItems + str(invTypes.objects.get(typeName = key).typeID) + ','
                                 reqItems = reqItems + str(need[key]) + ','
@@ -916,6 +940,7 @@ def import_lp_data(request):
     return render_to_response('records/import_lp.html',
                               context_instance=RequestContext(request))
 
+# View to display LP store-related details on a particular item.
 def lp_detail(request, type_id):
     try:
         item = LPReward.objects.get(pk=type_id)
