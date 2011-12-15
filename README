@@ -1,3 +1,9 @@
-The 'site' level (elc) settings.py isn't included due to apache's mod_wsgi needing it's own config (settings_production.py in apache dir).
+Notes:
 
-If invoking manage.py complains it can't find settings.py, you can copy the contents of settings_production.py into a settings.py file located in the 'elc' dir. However, meaningful updates need to go into settings_production.py.
+-main.py is not used anywhere.
+
+-The 'site' level (elc) settings.py isn't included due to apache's mod_wsgi needing it's own config (settings_production.py in apache dir).
+--If invoking manage.py complains it can't find settings.py, you can copy the contents of settings_production.py into a settings.py file located in the 'elc' dir. However, when running normally through apache, 'settings.py' will be ignored in lieu of 'settings_production.py'.
+--Additionally, settings_production.py has had it's password redacted, so you will need to enter that yourself each time you checkout that file.
+
+-Normally, one would edit the static files for each app and then do a 'python manage.py collectstatic' to update/copy those app-specific static files to the global static dir. I DO NOT DO THIS, as it is a PITA to do so after each edit of a CSS file, etc, so I have been editing the files in the top-level static dir instead. Therefore, static files in the app directories may be different (older) than the versions in the top static dir.
