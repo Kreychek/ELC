@@ -1,0 +1,76 @@
+body{
+    font-family: verdana, sans-serif;
+    font-size: 10pt;
+}
+
+td.stats-cat{
+    width: 100px;
+}
+
+td.stats-val{
+    text-align: right;
+}
+
+div.detail-stats{
+    height: 120px;
+    width: auto;
+}
+
+div#buy-stats{
+    float:left;
+    margin-right: 20px;
+}
+
+div#sell-stats{
+    float:left;
+}
+
+div.detail-stats caption{
+    font-weight: bold;
+    text-align: left;
+    color: #666
+}
+
+div.detail-stats table{
+    font-size: 9pt;
+    width: 250px;
+    border-collapse: collapse;
+}
+
+div.detail-stats tr.even{
+    background-color: #EDF3FE;
+}
+
+div.detail-stats tr.odd{
+    background-color: white;
+}
+
+div.attributes table{
+    font-size: 8pt;
+    width: 250px;
+    border-collapse: collapse;
+}
+
+div.attributes tr.even{
+    background-color: #EDF3FE;
+}
+
+div.attributes tr.odd{
+    background-color: white;
+}
+
+td.attr-cat{
+    width: 200px;
+}
+
+td.attr-val{
+    text-align: right;
+}
+
+h1{
+    font-size: 14pt;
+}
+
+h2{
+    font-size: 11pt;
+}

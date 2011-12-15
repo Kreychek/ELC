@@ -1,0 +1,93 @@
+<h2>Buyers</h2>
+{% spaceless %}
+{% load django_tables2 %}
+{% if buy.page %}
+<div class="table-container">
+{% endif %}
+<table{% if buy.attrs %} {{ buy.attrs.as_html }}{% endif %}>
+    <thead>
+        <tr class="{% cycle "odd" "even" %}">
+        {% for column in buy.columns %}
+        {% if column.sortable %}
+            {% with column.order_by as ob %}
+            <th class="{% spaceless %}{% if column.header == "Security" %}security {% endif %}{% if column.header == "Region" %}region {% endif %}{% if column.header == "Station" %}station {% endif %}{% if column.header == "Qty" %}qty {% endif %}{% if column.header == "Issue date" %}issue-date {% endif %}{% if column.header == "Duration" %}duration {% endif %}{% if column.header == "Entry updated" %}entry-updated {% endif %}{% if column.sortable %}sortable {% endif %}{% if ob %}{% if ob.is_descending %}desc{% else %}asc{% endif %}{% endif %}{% endspaceless %}"><a href="{% if ob %}{% set_url_param sort=ob.opposite %}{% else %}{% set_url_param sort=column.name %}{% endif %}">{{ column.header }}</a></th>
+            {% endwith %}
+        {% else %}
+            <th>{{ column.header }}</th>
+        {% endif %}
+        {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in buy.page.object_list|default:buy.rows %} {# support pagination #}
+        <tr class="{% cycle "odd" "even" %}">
+            {% for cell in row %}
+                <td>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        {% empty %}
+        {% if buy.empty_text %}
+        <tr><td colspan="{{ buy.columns|length }}">{{ buy.empty_text }}</td></tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+{% if buy.page %}
+<ul class="pagination">
+    {% if buy.page.has_previous %}
+    <li class="previous"><a href="{% set_url_param page=buy.page.previous_page_number %}">Previous</a></li>
+    {% endif %}
+    <li class="current">Page {{ buy.page.number }} of {{ buy.paginator.num_pages }}</li>
+    {% if buy.page.has_next %}
+    <li class="next"><a href="{% set_url_param page=buy.page.next_page_number %}">Next</a></li>
+    {% endif %}
+</ul>
+</div>
+{% endif %}
+{% endspaceless %}
+<h2>Sellers</h2>
+{% spaceless %}
+{% if sell.page %}
+<div class="table-container">
+{% endif %}
+<table{% if sell.attrs %} {{ sell.attrs.as_html }}{% endif %}>
+    <thead>
+        <tr class="{% cycle "odd" "even" %}">
+        {% for column in sell.columns %}
+        {% if column.sortable %}
+            {% with column.order_by as ob %}
+            <th class="{% spaceless %}{% if column.header == "Security" %}security {% endif %}{% if column.header == "Region" %}region {% endif %}{% if column.header == "Station" %}station {% endif %}{% if column.header == "Qty" %}qty {% endif %}{% if column.header == "Issue date" %}issue-date {% endif %}{% if column.header == "Duration" %}duration {% endif %}{% if column.header == "Entry updated" %}entry-updated {% endif %}{% if column.sortable %}sortable {% endif %}{% if ob %}{% if ob.is_descending %}desc{% else %}asc{% endif %}{% endif %}{% endspaceless %}"><a href="{% if ob %}{% set_url_param sort=ob.opposite %}{% else %}{% set_url_param sort=column.name %}{% endif %}">{{ column.header }}</a></th>
+            {% endwith %}
+        {% else %}
+            <th>{{ column.header }}</th>
+        {% endif %}
+        {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in sell.page.object_list|default:sell.rows %} {# support pagination #}
+        <tr class="{% cycle "odd" "even" %}">
+            {% for cell in row %}
+                <td>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        {% empty %}
+        {% if sell.empty_text %}
+        <tr><td colspan="{{ sell.columns|length }}">{{ sell.empty_text }}</td></tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+{% if sell.page %}
+<ul class="pagination">
+    {% if sell.page.has_previous %}
+    <li class="previous"><a href="{% set_url_param page=sell.page.previous_page_number %}">Previous</a></li>
+    {% endif %}
+    <li class="current">Page {{ sell.page.number }} of {{ sell.paginator.num_pages }}</li>
+    {% if sell.page.has_next %}
+    <li class="next"><a href="{% set_url_param page=sell.page.next_page_number %}">Next</a></li>
+    {% endif %}
+</ul>
+</div>
+{% endif %}
+{% endspaceless %}

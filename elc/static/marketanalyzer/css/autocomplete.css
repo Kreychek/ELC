@@ -1,0 +1,27 @@
+#typeid {
+	width: 300px;
+}
+
+#type_results {
+	border: 1px solid #666;
+	border-bottom: 1px;
+	font-size: 11px;
+	font-family: verdana;
+	padding: 1px;
+	display: none;
+}
+
+#type_results div {
+    border-bottom: 1px solid #666;
+    padding: 2px;
+}
+
+#type_results .selected {
+	background-color: #666;
+	color: #fff;
+}
+
+#type_results .unselected {
+	background-color: #fff;
+	color: #666;
+}

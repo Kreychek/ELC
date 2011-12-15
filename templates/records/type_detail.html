@@ -1,47 +1,45 @@
+{% extends "/home/django/templates/records/baseline_header.html" %}
 {% load django_tables2 %}
 {% load pretty_numbers %}
-<html>
-    <head>
-        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
-        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base.css" />
-    </head>
-    <body>
-        <h1>{{ item.typeName }}</h1>
-        <h2>Statistics</h2>
-        <div class="detail-stats">
-            <table>
-                <caption>Buy Orders</caption>
-                <tr class="even"><td class="stats-cat">Mean price</td><td class="stats-val">{{ item.meanBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
-                <tr class="odd"><td class="stats-cat">Median price</td><td class="stats-val">{{ item.medianBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
-                <tr class="even"><td class="stats-cat">High price</td><td class="stats-val">{{ item.highBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
-                <tr class="odd"><td class="stats-cat">Low price</td><td class="stats-val">{{ item.lowBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
-                <tr class="even"><td class="stats-cat">Std deviation</td><td class="stats-val">{{ item.stdDevBuy|comma_trunc:"N/A"|isk }}</td></tr>
-                <tr class="odd"><td class="stats-cat">Variance</td><td class="stats-val">{{ item.varianceBuy|floatformat:2 }}</td></tr>
-            </table>
-            <br>
-            <table>
-                <caption>Sell Orders</caption>
-                <tr class="even"><td class="stats-cat">Mean price</td><td class="stats-val">{{ item.meanSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
-                <tr class="odd"><td class="stats-cat">Median price</td><td class="stats-val">{{ item.medianSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
-                <tr class="even"><td class="stats-cat">High price</td><td class="stats-val">{{ item.highSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
-                <tr class="odd"><td class="stats-cat">Low price</td><td class="stats-val">{{ item.lowSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
-                <tr class="even"><td class="stats-cat">Std deviation</td><td class="stats-val">{{ item.stdDevSell|comma_trunc:"N/A"|isk }}</td></tr>
-                <tr class="odd"><td class="stats-cat">Variance</td><td class="stats-val">{{ item.varianceSell|floatformat:2 }}</td></tr>
-            </table>
+
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
+{% endblock %}
+
+{% block body %}
+    <h1>{{ item.typeName }}</h1>
+    <h2>Statistics</h2>
+    <div class="detail-stats">
+        <div id="buy-stats">
+        <table>
+            <caption>Buy Orders</caption>
+            <tr class="even"><td class="stats-cat">Mean price</td><td class="stats-val">{{ item.meanBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
+            <tr class="odd"><td class="stats-cat">Median price</td><td class="stats-val">{{ item.medianBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
+            <tr class="even"><td class="stats-cat">High price</td><td class="stats-val">{{ item.highBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
+            <tr class="odd"><td class="stats-cat">Low price</td><td class="stats-val">{{ item.lowBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
+            <tr class="even"><td class="stats-cat">Std deviation</td><td class="stats-val">{{ item.stdDevBuy|comma_trunc:"N/A"|isk }}</td></tr>
+            <tr class="odd"><td class="stats-cat">Variance</td><td class="stats-val">{{ item.varianceBuy|floatformat:2 }}</td></tr>
+        </table>
         </div>
-        
-        <div class="attributes">
-            <h2>Attributes</h2>
-            <table class="attr">
-                {% for key, val in attrs.items %}
-                <tr class="{% cycle 'even' 'odd' %}"><td class="attr-cat">{{ key }}</td><td class="attr-val">{{ val }}</td></tr>
-                {% endfor %}
-            </table>
+        <div id="sell-stats">
+        <table>
+            <caption>Sell Orders</caption>
+            <tr class="even"><td class="stats-cat">Mean price</td><td class="stats-val">{{ item.meanSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
+            <tr class="odd"><td class="stats-cat">Median price</td><td class="stats-val">{{ item.medianSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
+            <tr class="even"><td class="stats-cat">High price</td><td class="stats-val">{{ item.highSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
+            <tr class="odd"><td class="stats-cat">Low price</td><td class="stats-val">{{ item.lowSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
+            <tr class="even"><td class="stats-cat">Std deviation</td><td class="stats-val">{{ item.stdDevSell|comma_trunc:"N/A"|isk }}</td></tr>
+            <tr class="odd"><td class="stats-cat">Variance</td><td class="stats-val">{{ item.varianceSell|floatformat:2 }}</td></tr>
+        </table>
         </div>
-        
-        <h2>Buyers</h2>
-        {% render_table buy %}
-        <h2>Sellers</h2>
-        {% render_table sell %}
-    </body>
-</html>
+    </div>
+    <div class="attributes">
+        <h2>Attributes</h2>
+        <table>
+            {% for key, val in attrs.items %}
+            <tr class="{% cycle 'even' 'odd' %}"><td class="attr-cat">{{ key }}</td><td class="attr-val">{{ val }}</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% include "/home/django/templates/records/type_detail-dt2.html" %}
+{% endblock %}

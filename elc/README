@@ -1,0 +1,6 @@
+Dev notes:
+
+-main.py is not used anywhere
+-print statements output to development server terminal
+
+Pending coding tasks are listed in comments starting with "TO DO".

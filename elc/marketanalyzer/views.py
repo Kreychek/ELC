@@ -16,6 +16,8 @@ from django.forms.formsets import formset_factory
 import django_tables2 as tables
 
 from marketanalyzer.models import *
+from marketanalyzer.forms import *
+from marketanalyzer.tables import *
 
 logging.basicConfig()
 
@@ -40,9 +42,6 @@ def str2bool(val):
         return True
     if ( val == 'False' ):
         return False
-
-class UploadFileForm(forms.Form):
-    file  = forms.FileField()
 
 # Accept an uploaded file that contains market orders in our CSV format.
 def upload(request):
@@ -270,72 +269,6 @@ def compute_price_data(types):
             x = modified(typeID=item.typeID)
             x.save()
 
-# Table to display market records of (potentially multiple) types.
-class RecordTable(tables.Table):
-    # since MarketRecord doesn't directly hold typeName, we must override the
-    #  accessor to follow the FK to get it
-    type_name = tables.Column(accessor='typeID.typeName')
-    regionName = tables.Column(accessor='stationID.regionID.regionName')
-    #solarSystemName = tables.Column(accessor='solarSystemID.solarSystemName',
-    #                                verbose_name='Solar System')
-    security = tables.Column(accessor='stationID.solarSystemID.security')
-    stationName = tables.Column(accessor='stationID.stationName')
-    
-    # TO DO: -remove fields from models so we don't have to hide so much
-    #        -hide itemName col from detail views
-    #        -get price to align right and force 2 decimal places shown
-    id = tables.Column(visible=False)
-    typeID = tables.Column(visible=False)
-    range = tables.Column(visible=False)
-    orderID = tables.Column(visible=False)
-    #regionID = tables.Column(visible=False)
-    #solarSystemID = tables.Column(visible=False)
-    jumps = tables.Column(visible=False)
-    bid = tables.Column(visible=False)
-    minVolume = tables.Column(visible=False)
-    solarSystemName = tables.Column(visible=False)
-    stationID = tables.Column(visible=False)
-    
-    def render_price(self, value):
-        return '%s' % locale.format('%.2f', value, grouping=True)
-        
-    def render_security(self, value):
-        return '%.1f' % value
-    
-    # django-tables2 offers automatic generation of columns based on a model
-    # NOTE: Col sorting is handled by the DB when table is backed by a model
-    class Meta:
-        model = MarketRecord
-        attrs = {'class': 'paleblue'}
-        sequence = ('security', 'regionName', 'stationName',
-                    'type_name', 'price', 'volEntered', 'volRemaining', '...')
-
-# Table of order info used by the type_detail view.
-class DetailTable(RecordTable):
-    regionName = tables.Column(accessor='stationID.regionID.regionName')
-    solarSystemName = tables.Column(accessor='stationID.solarSystemID.solarSystemName',
-                                    verbose_name='Solar System')
-    security = tables.Column(accessor='stationID.solarSystemID.security')
-    stationName = tables.Column(accessor='stationID.stationName')
-    id = tables.Column(visible=False)
-    typeID = tables.Column(visible=False)
-    range = tables.Column(visible=False)
-    orderID = tables.Column(visible=False)
-    #regionID = tables.Column(visible=False)
-    #solarSystemID = tables.Column(visible=False)
-    jumps = tables.Column(visible=False)
-    bid = tables.Column(visible=False)
-    type_name = tables.Column(visible=False)
-    minVolume = tables.Column(visible=False)
-    solarSystemName = tables.Column(visible=False)
-    stationID = tables.Column(visible=False)
-    
-    class Meta:
-        model = MarketRecord
-        attrs = {'class': 'paleblue'}
-        sequence = ('security', 'regionName', 'stationName',
-                    'type_name', 'price', 'volEntered', 'volRemaining', '...')
-        
 # TO DO: for all views using tables
 #        -remove some irrelevant columns from tables
 #        -paginate results
@@ -360,25 +293,25 @@ def type_detail(request, type_id):
     # Dict to hold the attributes of the item in question
     attrs = {}
     
-    stat_types = ['Median price',
-                  'Mean price',
-                  'High price',
-                  'Low price',
-                  'Std deviation',
-                  'Variance']
-    
-    # These 2 dicts' key-val pairs are used literally in the template
-    buy_stats = dict(zip(stat_types, (item.medianBuyPrice, item.meanBuyPrice,
-                                      item.highBuyPrice, item.lowBuyPrice,
-                                      item.stdDevBuy, item.varianceBuy)))
-    
-    print 'buy_stats:', buy_stats
-                     
-    sell_stats = dict(zip(stat_types, (item.medianSellPrice, item.meanSellPrice,
-                                      item.highSellPrice, item.lowSellPrice,
-                                      item.stdDevSell, item.varianceSell)))
-    
-    print 'sell_stats', sell_stats
+    #stat_types = ['Median price',
+    #              'Mean price',
+    #              'High price',
+    #              'Low price',
+    #              'Std deviation',
+    #              'Variance']
+    #
+    ## These 2 dicts' key-val pairs are used literally in the template
+    #buy_stats = dict(zip(stat_types, (item.medianBuyPrice, item.meanBuyPrice,
+    #                                  item.highBuyPrice, item.lowBuyPrice,
+    #                                  item.stdDevBuy, item.varianceBuy)))
+    #
+    #print 'buy_stats:', buy_stats
+    #                 
+    #sell_stats = dict(zip(stat_types, (item.medianSellPrice, item.meanSellPrice,
+    #                                  item.highSellPrice, item.lowSellPrice,
+    #                                  item.stdDevSell, item.varianceSell)))
+    #
+    #print 'sell_stats', sell_stats
     
     # Fill attr dict with attribute names as keys, and the int/float as values
     # Each attribute should have either an int or a float value, not both
@@ -413,7 +346,7 @@ def type_detail(request, type_id):
     
     return render_to_response('records/type_detail.html',
                               { 'buy': buy, 'sell': sell,
-                               'buy_stats': buy_stats, 'sell_stats': sell_stats,
+                               #'buy_stats': buy_stats, 'sell_stats': sell_stats,
                                'attrs': attrs, 'item': item },
                               context_instance=RequestContext(request))
 
@@ -590,17 +523,6 @@ def search(request):
                                'found_entries': found_entries },
                               context_instance=RequestContext(request))
 
-# Table to display results of an LP search.
-class LPResults(tables.Table):
-    corp = tables.Column(verbose_name='Corporation')
-    itemName = tables.Column(verbose_name='Item')
-    qty = tables.Column(verbose_name='Qty')
-    ISKcost = tables.Column(verbose_name='ISK Cost')
-    LPcost = tables.Column(verbose_name='LP Cost')
-    
-    class Meta:
-        attrs = {'class': 'paleblue'}
-
 # View to search LP store rewards.
 def lp_search(request):
     query_string = ''
@@ -641,64 +563,6 @@ def lp_search(request):
 # other_fee: -could assume a stat + region. If not, requires region/stat.
 #            (e.g. cost of buying T1 ammo to convert to faction ammo)
 # sellPrice: -determined by region & price stat (e.g. mean buy price)
-
-# TO DO: LP Calc should ask for corp that the LP is for and narrow calcs based on such
-
-# Form to get list of item(s) for the LP calculator.
-class LPCalcItem(forms.Form):
-    # 'size' attr is height of widget (# of entries visible)
-    item = forms.MultipleChoiceField(choices=LPitems,
-                                     widget=forms.SelectMultiple(
-                                        attrs={'size': 30}))
-    spendable = forms.IntegerField() # the amt of LP available to spend
-
-# Form to choose the region and price statistic for each item to use in
-# calculations.
-class LPCalcDetails(forms.Form):
-    # Available price stat options. These are all generated by SQL aggregate
-    # functions performed on a filtered query.
-    __priceStats = (
-        ('meanbp', 'Mean Buy Price'),
-        #('medbp', 'Median Buy Price'),
-        ('hbp', 'High Buy Price'),
-        ('lbp', 'Low Buy Price'),
-        ('meansp', 'Mean Sell Price'),
-        #('medsp', 'Median Sell Price'),
-        ('hsp', 'High Sell Price'),
-        ('lsp', 'Low Sell Price')
-    )
-    region = forms.MultipleChoiceField(choices=regions)
-    stat = forms.ChoiceField(choices=__priceStats)
-    item_name = ''
-
-# Table to display results of LP calculator. Shown in step 2.
-class LPCalcResultsTable(tables.Table):
-    itemName = tables.Column(verbose_name='Item')
-    regionName = tables.Column(verbose_name='Region')
-    sellPrice = tables.Column(verbose_name='Sell Price')
-    storeFee = tables.Column(verbose_name='Store Fee')
-    otherFee = tables.Column(verbose_name='Other Fee')
-    lpCost = tables.Column(verbose_name='LP Cost')
-    profitPer = tables.Column()
-    profit = tables.Column()
-    
-    def render_sellPrice(self, value):
-        return '%s' % locale.format('%.2f', value, grouping=True)
-    
-    def render_storeFee(self, value):
-        return '%s' % locale.format('%.2f', value, grouping=True)
-        
-    def render_otherFee(self, value):
-        return '%s' % locale.format('%.2f', value, grouping=True)
-    
-    def render_profitPer(self, value):
-        return '%s' % locale.format('%.2f', value, grouping=True)
-    
-    def render_profit(self, value):
-        return '%s' % locale.format('%.2f', value, grouping=True)
-    
-    class Meta:
-        attrs = {'class': 'paleblue'}
 
 # Accepts iterable of typeID, regionID, and __priceStats.
 # Returns a dict containing table data each type, to fill an LPCalcResultsTable.
@@ -762,6 +626,7 @@ def calculate_profits(items, region, stat, spendable):
 #        -consider storing state as a hash, like Django form wizard
 #        -consider storing state entirely in querystring, so each step can be
 #         bookmarked/pasted to people.
+#        -should ask for corp that the LP is for and narrow calcs based on such
     
 # View to calculate profits from selling various LP store rewards in any
 # location given prevailing market conditions.
