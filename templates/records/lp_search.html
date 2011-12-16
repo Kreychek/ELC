@@ -1,28 +1,27 @@
-<html>
-    <head>
-        <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}css/autocomplete.css">
-        <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.js"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}js/autocomplete.js"></script>
-        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
-    </head>
-{% block body %}
-<font face=verdana size=2>
+{% extends "/home/django/templates/records/base.html" %}
+
+{% block head %}
+    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}css/autocomplete.css">
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/autocomplete.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen-dark.css" />
+{% endblock head %}
+
+{% block content %}
     <h1>LP Reward Search</h1>
-<form method="get">
-<div>
-{% include "/home/django/templates/records/lp_lookup.html" %}<input type="submit" value="Search" />
-</div>
-</form>
+    <form method="get">
+        <div>
+            {% include "/home/django/templates/records/lp_lookup.html" %}<input type="submit" value="Search" />
+        </div>
+    </form>
 
 Searching is not case-sensitive and performs a logical AND on all terms.
 {% if query_string %}
-<p>You searched for: "{{ query_string }}"<br></p></font>
+You searched for: "{{ query_string }}"<br>
 {% endif %}
 
 {% if results %}
 {% load django_tables2 %}
 {% render_table results %}
 {% endif %}
-
-{% endblock %}
-</html>
+{% endblock content %}

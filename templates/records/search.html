@@ -1,20 +1,21 @@
-{% extends "/home/django/templates/records/baseline_header.html" %}
+{% extends "/home/django/templates/records/base.html" %}
 
 {% block head %}
     <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}css/autocomplete.css">
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/autocomplete.js"></script>
-{% endblock %}
+{% endblock head %}
 
-{% block body %}
+{% block content %}
+    <h1>Market Search</h1>
     <form method="get">
         {% include "/home/django/templates/records/lookup.html" %}
         <input type="submit" value="Search" />
     </form>
-    Searching is not case-sensitive and performs a logical AND on all terms.
+    Searching is not case-sensitive and performs a logical AND on all terms.<br>
     {% if query_string %}
-    <p>The number in parentheses is outstanding market orders.</p>
-    <p>You searched for: {{ query_string }}</p>
+    The number in parentheses is outstanding market orders.<br><br>
+    You searched for: {{ query_string }}<br><br>
     {% endif %}
     
     {% if found_entries %}
@@ -25,4 +26,4 @@
     {% endif %}
     </p>
     
-{% endblock %}
+{% endblock content %}

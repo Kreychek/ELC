@@ -1,3 +1,7 @@
+from django import forms
+
+from marketanalyzer.models import LPitems, regions
+
 # Form used for uploading market dumps.
 class UploadFileForm(forms.Form):
     file  = forms.FileField()

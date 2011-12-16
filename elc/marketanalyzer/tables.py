@@ -1,3 +1,9 @@
+import locale
+from datetime import datetime, timedelta
+
+import django_tables2 as tables
+
+from marketanalyzer.models import *
 
 # Table to display market records of (potentially multiple) types.
 class RecordTable(tables.Table):
@@ -20,6 +26,9 @@ class RecordTable(tables.Table):
     minVolume = tables.Column(visible=False)
     solarSystemName = tables.Column(visible=False)
     stationID = tables.Column(visible=False)
+    issueDate = tables.Column(verbose_name='Issue date')
+    duration = tables.Column(verbose_name='Expires')
+    __lastIssueDate = ''
     
     def render_price(self, value):
         return '%s' % locale.format('%.2f', value, grouping=True)
@@ -27,7 +36,17 @@ class RecordTable(tables.Table):
     def render_security(self, value):
         return '%.1f' % value
     
+    def render_issueDate(self, value):
+        self.__lastIssueDate = '%s' % value
+        return '%s' % value
+    
+    def render_duration(self, value):
+        date = datetime.datetime.strptime(self.__lastIssueDate, '%Y-%m-%d %H:%M:%S')
+        td = timedelta(days=value)
+        return '%s' % (date + td)
+    
     # django-tables2 offers automatic generation of columns based on a model
+    # Above cols are defined if we need to modify their attributes from default
     # NOTE: Col sorting is handled by the DB when table is backed by a model
     class Meta:
         model = MarketRecord
@@ -41,7 +60,8 @@ class DetailTable(RecordTable):
                                verbose_name='Region')
     solarSystemName = tables.Column(accessor='stationID.solarSystemID.solarSystemName',
                                     verbose_name='Solar System')
-    security = tables.Column(accessor='stationID.solarSystemID.security')
+    security = tables.Column(accessor='stationID.solarSystemID.security',
+                             verbose_name='Sec')
     stationName = tables.Column(accessor='stationID.stationName',
                                 verbose_name='Station')
     id = tables.Column(visible=False)
@@ -56,6 +76,8 @@ class DetailTable(RecordTable):
     stationID = tables.Column(visible=False)
     volEntered = tables.Column(visible=False)
     volRemaining = tables.Column(verbose_name='Qty')
+    price = tables.Column()
+    duration = tables.Column(verbose_name='Expires')
     
     class Meta:
         model = MarketRecord

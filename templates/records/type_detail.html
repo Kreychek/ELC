@@ -1,12 +1,11 @@
-{% extends "/home/django/templates/records/baseline_header.html" %}
-{% load django_tables2 %}
+{% extends "/home/django/templates/records/base.html" %}
 {% load pretty_numbers %}
 
 {% block head %}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
-{% endblock %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen-dark.css" />
+{% endblock head %}
 
-{% block body %}
+{% block content %}
     <h1>{{ item.typeName }}</h1>
     <h2>Statistics</h2>
     <div class="detail-stats">
@@ -33,6 +32,7 @@
         </table>
         </div>
     </div>
+    {% if attrs %}
     <div class="attributes">
         <h2>Attributes</h2>
         <table>
@@ -41,5 +41,7 @@
             {% endfor %}
         </table>
     </div>
+    {% endif %}
+    <br>
     {% include "/home/django/templates/records/type_detail-dt2.html" %}
-{% endblock %}
+{% endblock content %}

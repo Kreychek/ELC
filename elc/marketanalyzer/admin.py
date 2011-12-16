@@ -69,6 +69,7 @@ class modifiedAdmin(admin.ModelAdmin):
 class LPRewardAdmin(admin.ModelAdmin):
     list_display = ('corp', 'itemName', 'qty', 'LPcost', 'ISKcost', 'requiredItems')
     list_filter = ['corp', 'itemName']
+    search_fields = ['itemName']
 
 admin.site.register(MarketRecord, MarketAdmin)
 admin.site.register(invTypes, invTypesAdmin)

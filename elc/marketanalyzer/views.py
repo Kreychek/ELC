@@ -1,7 +1,6 @@
 import os.path
 import csv, glob, sys, string, math, datetime, re, locale, timeit, logging
 
-from django import forms
 from django.template import RequestContext
 from django.core.urlresolvers import reverse
 from django.core.cache import cache
@@ -13,7 +12,6 @@ from django.core.files.uploadhandler import MemoryFileUploadHandler
 from django.utils import simplejson
 from django.template import Template, Context
 from django.forms.formsets import formset_factory
-import django_tables2 as tables
 
 from marketanalyzer.models import *
 from marketanalyzer.forms import *
@@ -567,7 +565,10 @@ def lp_search(request):
 # Accepts iterable of typeID, regionID, and __priceStats.
 # Returns a dict containing table data each type, to fill an LPCalcResultsTable.
 #
-# TO DO: figure out other_fee (currently set to 0)
+# TO DO: -figure out other_fee (currently set to 0)
+#        -make sure prices/fees/etc are PER UNIT or PER PURCHASE SIZE and calc
+#         profits accordingly! (ex. faction ammo uses multiples of 5k)
+
 def calculate_profits(items, region, stat, spendable):
     count = len(items)
     data = list()
@@ -622,7 +623,7 @@ def calculate_profits(items, region, stat, spendable):
         
     return data
 
-# TO DO: -lp_calc validation!!
+# TO DO: -lp_calc validation + display errors when submitting invalid form
 #        -consider storing state as a hash, like Django form wizard
 #        -consider storing state entirely in querystring, so each step can be
 #         bookmarked/pasted to people.
@@ -652,6 +653,8 @@ def lp_calc(request):
             if request.GET.get('step') == '1':
                 print '** On STEP 1...'
                 
+                #print 'cleaned_data:', form.cleaned_data
+                
                 if form.is_valid():
                     print '** Form validated.'
                     
@@ -674,6 +677,11 @@ def lp_calc(request):
                     return render_to_response('records/lp_calc2.html',
                                               {'formset': formset, 'items': item_list, 'spendable': spendable},
                                               context_instance=RequestContext(request))
+                # if form doesn't validate
+                else:
+                    print 'step 1 didnt validate:'
+                    for field in form:
+                        print field.errors
                     
             # We have the item list and associated region-stat combos,
             # so perform the required calculations and display the result.

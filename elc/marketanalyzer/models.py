@@ -425,7 +425,16 @@ class dgmAttributeTypes(models.Model):
 LPitems = []
 
 for x in invTypes.objects.filter(isLPreward__exact=True).order_by('typeName'):
-    LPitems.append((x.typeID, x.typeName + ' (' + str(x.typeID) + ')'))
+    if len(MarketRecord.objects.filter(typeID__exact=x.typeID)) != 0:
+        LPitems.append((x.typeID, x.typeName + ' [' + str(x.typeID) + ']' + ' (' + str(len(MarketRecord.objects.filter(typeID__exact=x.typeID))) + ')'))
+
+#LPitems_with_stats = LPitems
+#
+#for x in LPitems_with_stats:
+#    print x[1][len(x[1])-3:]
+#    if x[1][len(x[1])-3:] == u'(0)':
+#        print 'removing', x[1]
+#        LPitems_with_stats.remove(x)
 
 # used in LP Calc
 regions = []

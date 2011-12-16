@@ -1,11 +1,11 @@
-<html>
-    <body>
+{% extends "/home/django/templates/records/base.html" %}
+    {% block content %}
         <form method="get" action="">
             {{ formset.management_form }}
             <table>
                 {% for form in formset %}
                     {{ form.item_name }}
-                    {{ form.as_p }}
+                    {{ form.as_p }}<br>
                 {% endfor %}
             </table>
             <input type="submit" value="Submit">
@@ -13,5 +13,4 @@
             <input type=hidden name='items' value='{% for i in items %}{{ i|safe }};{% endfor %}'/>
             <input type=hidden name='spendable' value='{{ spendable }}'/>
         </form>
-    </body>
-</html>
+    {% endblock content %}

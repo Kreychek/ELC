@@ -1,14 +1,14 @@
-<html>
-    <head>
-    </head>
-    <body>
+{% extends "/home/django/templates/records/base.html" %}
+    {% block content %}
         <form method="get" action="{% url marketanalyzer.views.lp_calc %}">
-         Selection: {{ form.item }}<br>
-         Spendable LP: {{ form.spendable }}<br>
+         Selection:<br>{{ form.item }}<br><br>
+         Spendable LP: {{ form.spendable }}<br><br>
          {% if not formset %}
-            <input type="submit" value="Submit" />
+            <input type="submit" value="Submit" /><br><br>
         {% endif %}
         <input type=hidden name='step' value='1'/>
         </form>
-    </body>
-</html>
+        Notes: Use CTRL/SHIFT to select multiple items.<br>
+        Brackets indicate typeID, parentheses indicate order count.<br>
+        <i>This is not stable; bad things can still happen if the right stats aren't available for an item.</i><br>
+    {% endblock content %}

@@ -1,0 +1,26 @@
+<html lang=en>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base-dark.css" />
+        {% block head %}
+        {% endblock head %}
+    </head>
+    <body>
+        <div id="header">
+        </div>
+        <div id="menu_border">
+            <div id="menu">
+                {% include "/home/django/templates/records/navbar.html" %}
+            </div>
+        </div>
+        <div id="content_border">
+            <div id="content">
+                {% block content %}
+                {% endblock content %}
+            </div>
+            <div id="footer">
+                Questions or comments: <a href="mailto:kreychek@gmail.com">kreychek@gmail.com</a>
+            </div>
+        </div>
+  </body>
+</html>
