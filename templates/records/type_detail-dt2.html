@@ -1,137 +1,143 @@
 {% spaceless %}
 {% load django_tables2 i18n %}
-{% if buy.page %}
-<div class="table-container">
-{% endif %}
-{% block buy %}
-<h2>Buyers</h2>
-<table{% if buy.attrs %} {{ buy.attrs.as_html }}{% endif %}>
-    {% block buy.thead %}
-    <thead>
-        <tr class="{% cycle "odd" "even" %}">
-        {% for column in buy.columns %}
-        {% if column.sortable %}
-            {% with column.order_by as ob %}
-            <th class="{% spaceless %}{{ column.name }} {% if column.sortable %}sortable {% endif %}{% if ob %}{% if ob.is_descending %}desc{% else %}asc{% endif %}{% endif %}{% endspaceless %}"><a href="{% querystring buy.prefixed_order_by_field=ob.opposite|default:column.name %}">{{ column.header }}</a></th>
-            {% endwith %}
-        {% else %}
-            <th>{{ column.header }}</th>
-        {% endif %}
-        {% endfor %}
-        </tr>
-    </thead>
-    {% endblock buy.thead %}
-    {% block buy.tbody %}
-    <tbody>
-        {% for row in buy.page.object_list|default:buy.rows %} {# support pagination #}
-        {% block buy.tbody.row %}
-        <tr class="{% cycle "odd" "even" %}">
-            {% for col, val in row.items %}
-                <td class="{{ col }}">{{ val }}</td>
-            {% endfor %}
-        </tr>
-        {% endblock buy.tbody.row %}
-        {% empty %}
-        {% if buy.empty_text %}
-        {% block buy.tbody.empty_text %}
-        <tr><td colspan="{{ buy.columns|length }}">{{ buy.empty_text }}</td></tr>
-        {% endblock buy.tbody.empty_text %}
-        {% endif %}
-        {% endfor %}
-    </tbody>
-    {% endblock buy.tbody %}
-    {% block buy.tfoot %}
-    <tfoot></tfoot>
-    {% endblock buy.tfoot %}
-</table>
-{% endblock buy %}
-
-{% if buy.page %}
-{% block buy-pagination %}
-<ul class="pagination">
-    {% if buy.page.has_previous %}
-    {% block buy-pagination.previous %}
-    <li class="previous"><a href="{% querystring buy.prefixed_page_field=buy.page.previous_page_number %}">{% trans "Previous" %}</a></li>
-    {% endblock buy-pagination.previous %}
+{% if buy.rows.count > 0 %}
+    {% if buy.page %}
+        <div class="table-container">
     {% endif %}
-    {% block buy-pagination.current %}
-    <li class="current">{% blocktrans with current=buy.page.number total=buy.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktrans %}</li>
-    {% endblock buy-pagination.current %}
-    {% if buy.page.has_next %}
-    {% block buy-pagination.next %}
-    <li class="next"><a href="{% querystring buy.prefixed_page_field=buy.page.next_page_number %}">{% trans "Next" %}</a></li>
-    {% endblock buy-pagination.next %}
+    {% block buy %}
+        <h2>Buyers</h2>
+        <table{% if buy.attrs %} {{ buy.attrs.as_html }}{% endif %}>
+            {% block buy.thead %}
+            <thead>
+                <tr class="{% cycle "odd" "even" %}">
+                {% for column in buy.columns %}
+                    {% if column.sortable %}
+                        {% with column.order_by as ob %}
+                        <th class="{% spaceless %}{{ column.name }} {% if column.sortable %}sortable {% endif %}{% if ob %}{% if ob.is_descending %}desc{% else %}asc{% endif %}{% endif %}{% endspaceless %}"><a href="{% querystring buy.prefixed_order_by_field=ob.opposite|default:column.name %}">{{ column.header }}</a></th>
+                        {% endwith %}
+                    {% else %}
+                        <th>{{ column.header }}</th>
+                    {% endif %}
+                {% endfor %}
+                </tr>
+            </thead>
+            {% endblock buy.thead %}
+            {% block buy.tbody %}
+            <tbody>
+                {% for row in buy.page.object_list|default:buy.rows %} {# support pagination #}
+                    {% block buy.tbody.row %}
+                    <tr class="{% cycle "odd" "even" %}">
+                        {% for col, val in row.items %}
+                            <td class="{{ col }}">{{ val }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endblock buy.tbody.row %}
+                    {% empty %}
+                    {% if buy.empty_text %}
+                        {% block buy.tbody.empty_text %}
+                        <tr><td colspan="{{ buy.columns|length }}">{{ buy.empty_text }}</td></tr>
+                        {% endblock buy.tbody.empty_text %}
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+            {% endblock buy.tbody %}
+            {% block buy.tfoot %}
+            <tfoot></tfoot>
+            {% endblock buy.tfoot %}
+        </table>
+    {% endblock buy %}
+    
+    {% if buy.page %}
+        {% block buy-pagination %}
+            <ul class="pagination">
+                {% if buy.page.has_previous %}
+                {% block buy-pagination.previous %}
+                <li class="previous"><a href="{% querystring buy.prefixed_page_field=buy.page.previous_page_number %}">{% trans "Previous" %}</a></li>
+                {% endblock buy-pagination.previous %}
+                {% endif %}
+                {% block buy-pagination.current %}
+                <li class="current">{% blocktrans with current=buy.page.number total=buy.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktrans %}</li>
+                {% endblock buy-pagination.current %}
+                {% if buy.page.has_next %}
+                {% block buy-pagination.next %}
+                <li class="next"><a href="{% querystring buy.prefixed_page_field=buy.page.next_page_number %}">{% trans "Next" %}</a></li>
+                {% endblock buy-pagination.next %}
+                {% endif %}
+            </ul>
+        {% endblock buy-pagination %}
+        </div>
     {% endif %}
-</ul>
-{% endblock buy-pagination %}
-</div>
 {% endif %}
 {% endspaceless %}
-{% spaceless %}
-{% if sell.page %}
-<div class="table-container">
-{% endif %}
-{% block sell %}
-<h2>Sellers</h2>
-<table{% if sell.attrs %} {{ sell.attrs.as_html }}{% endif %}>
-    {% block sell.thead %}
-    <thead>
-        <tr class="{% cycle "odd" "even" %}">
-        {% for column in sell.columns %}
-        {% if column.sortable %}
-            {% with column.order_by as ob %}
-            <th class="{% spaceless %}{{ column.name}} {% if column.sortable %}sortable {% endif %}{% if ob %}{% if ob.is_descending %}desc{% else %}asc{% endif %}{% endif %}{% endspaceless %}"><a href="{% querystring sell.prefixed_order_by_field=ob.opposite|default:column.name %}">{{ column.header }}</a></th>
-            {% endwith %}
-        {% else %}
-            <th>{{ column.header }}</th>
-        {% endif %}
-        {% endfor %}
-        </tr>
-    </thead>
-    {% endblock sell.thead %}
-    {% block sell.tbody %}
-    <tbody>
-        {% for row in sell.page.object_list|default:sell.rows %} {# support pagination #}
-        {% block sell.tbody.row %}
-        <tr class="{% cycle "odd" "even" %}">
-            {% for col, val in row.items %}
-                <td class="{{ col }}">{{ val }}</td>
-            {% endfor %}
-        </tr>
-        {% endblock sell.tbody.row %}
-        {% empty %}
-        {% if sell.empty_text %}
-        {% block sell.tbody.empty_text %}
-        <tr><td colspan="{{ sell.columns|length }}">{{ sell.empty_text }}</td></tr>
-        {% endblock sell.tbody.empty_text %}
-        {% endif %}
-        {% endfor %}
-    </tbody>
-    {% endblock sell.tbody %}
-    {% block sell.tfoot %}
-    <tfoot></tfoot>
-    {% endblock sell.tfoot %}
-</table>
-{% endblock sell %}
 
-{% if sell.page %}
-{% block sell-pagination %}
-<ul class="pagination">
-    {% if sell.page.has_previous %}
-    {% block sell-pagination.previous %}
-    <li class="previous"><a href="{% querystring sell.prefixed_page_field=sell.page.previous_page_number %}">{% trans "Previous" %}</a></li>
-    {% endblock sell-pagination.previous %}
+{% spaceless %}
+{% if sell.rows.count > 0 %}
+    <br>
+    {% if sell.page %}
+    <div class="table-container">
     {% endif %}
-    {% block sell-pagination.current %}
-    <li class="current">{% blocktrans with current=sell.page.number total=sell.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktrans %}</li>
-    {% endblock sell-pagination.current %}
-    {% if sell.page.has_next %}
-    {% block sell-pagination.next %}
-    <li class="next"><a href="{% querystring sell.prefixed_page_field=sell.page.next_page_number %}">{% trans "Next" %}</a></li>
-    {% endblock sell-pagination.next %}
+    {% block sell %}
+    <h2>Sellers</h2>
+    <table{% if sell.attrs %} {{ sell.attrs.as_html }}{% endif %}>
+        {% block sell.thead %}
+        <thead>
+            <tr class="{% cycle "odd" "even" %}">
+            {% for column in sell.columns %}
+            {% if column.sortable %}
+                {% with column.order_by as ob %}
+                <th class="{% spaceless %}{{ column.name}} {% if column.sortable %}sortable {% endif %}{% if ob %}{% if ob.is_descending %}desc{% else %}asc{% endif %}{% endif %}{% endspaceless %}"><a href="{% querystring sell.prefixed_order_by_field=ob.opposite|default:column.name %}">{{ column.header }}</a></th>
+                {% endwith %}
+            {% else %}
+                <th>{{ column.header }}</th>
+            {% endif %}
+            {% endfor %}
+            </tr>
+        </thead>
+        {% endblock sell.thead %}
+        {% block sell.tbody %}
+        <tbody>
+            {% for row in sell.page.object_list|default:sell.rows %} {# support pagination #}
+            {% block sell.tbody.row %}
+            <tr class="{% cycle "odd" "even" %}">
+                {% for col, val in row.items %}
+                    <td class="{{ col }}">{{ val }}</td>
+                {% endfor %}
+            </tr>
+            {% endblock sell.tbody.row %}
+            {% empty %}
+            {% if sell.empty_text %}
+            {% block sell.tbody.empty_text %}
+            <tr><td colspan="{{ sell.columns|length }}">{{ sell.empty_text }}</td></tr>
+            {% endblock sell.tbody.empty_text %}
+            {% endif %}
+            {% endfor %}
+        </tbody>
+        {% endblock sell.tbody %}
+        {% block sell.tfoot %}
+        <tfoot></tfoot>
+        {% endblock sell.tfoot %}
+    </table>
+    {% endblock sell %}
+    
+    {% if sell.page %}
+    {% block sell-pagination %}
+    <ul class="pagination">
+        {% if sell.page.has_previous %}
+        {% block sell-pagination.previous %}
+        <li class="previous"><a href="{% querystring sell.prefixed_page_field=sell.page.previous_page_number %}">{% trans "Previous" %}</a></li>
+        {% endblock sell-pagination.previous %}
+        {% endif %}
+        {% block sell-pagination.current %}
+        <li class="current">{% blocktrans with current=sell.page.number total=sell.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktrans %}</li>
+        {% endblock sell-pagination.current %}
+        {% if sell.page.has_next %}
+        {% block sell-pagination.next %}
+        <li class="next"><a href="{% querystring sell.prefixed_page_field=sell.page.next_page_number %}">{% trans "Next" %}</a></li>
+        {% endblock sell-pagination.next %}
+        {% endif %}
+    </ul>
+    {% endblock sell-pagination %}
+    </div>
     {% endif %}
-</ul>
-{% endblock sell-pagination %}
-</div>
 {% endif %}
 {% endspaceless %}

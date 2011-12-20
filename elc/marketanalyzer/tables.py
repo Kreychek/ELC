@@ -41,7 +41,8 @@ class RecordTable(tables.Table):
         return '%s' % value
     
     def render_duration(self, value):
-        date = datetime.datetime.strptime(self.__lastIssueDate, '%Y-%m-%d %H:%M:%S')
+        date = datetime.datetime.strptime(self.__lastIssueDate,
+                                          '%Y-%m-%d %H:%M:%S')
         td = timedelta(days=value)
         return '%s' % (date + td)
     
@@ -53,13 +54,14 @@ class RecordTable(tables.Table):
         attrs = {'class': 'paleblue'}
         sequence = ('security', 'regionName', 'stationName',
                     'type_name', 'price', 'volEntered', 'volRemaining', '...')
-
+        
 # Table of order info used by the type_detail view.
 class DetailTable(RecordTable):
     regionName = tables.Column(accessor='stationID.regionID.regionName',
                                verbose_name='Region')
-    solarSystemName = tables.Column(accessor='stationID.solarSystemID.solarSystemName',
-                                    verbose_name='Solar System')
+    solarSystemName = tables.Column(
+        accessor='stationID.solarSystemID.solarSystemName',
+        verbose_name='Solar System')
     security = tables.Column(accessor='stationID.solarSystemID.security',
                              verbose_name='Sec')
     stationName = tables.Column(accessor='stationID.stationName',

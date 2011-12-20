@@ -41,7 +41,7 @@ body{
     font-family: verdana, sans-serif;
     font-size: 10pt;
     color: white;
-    background: url("/static/nebula_bg.jpg") top center no-repeat black;
+    background: blue;
 }
 
 font.note{

@@ -1,5 +1,7 @@
 {% extends "/home/django/templates/records/base.html" %}
     {% block content %}
+        <h1>Loyalty Point Calculator</h1>
+        <h2>Step 1 of 2</h2>
         <form method="get" action="{% url marketanalyzer.views.lp_calc %}">
          Selection:<br>{{ form.item }}<br><br>
          Spendable LP: {{ form.spendable }}<br><br>
@@ -8,7 +10,7 @@
         {% endif %}
         <input type=hidden name='step' value='1'/>
         </form>
-        Notes: Use CTRL/SHIFT to select multiple items.<br>
-        Brackets indicate typeID, parentheses indicate order count.<br>
-        <i>This is not stable; bad things can still happen if the right stats aren't available for an item.</i><br>
+        <font class="note">Use CTRL/SHIFT to select multiple items.<br>
+        Brackets indicate typeID, parentheses indicate order count.</font><br>
+        <font class="important">This is not 100% validated; bad things can happen if the right stats aren't available for an item. Also, don't rely on bookmarking anything but the last step for now.</font><br>
     {% endblock content %}

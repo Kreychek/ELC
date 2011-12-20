@@ -33,6 +33,12 @@ def convTS(ts):
     return datetime.datetime.fromtimestamp(((int(ts) - 116444736000000000) /
                                              10000000))
 
+theme = 'base-dark'
+
+def set_theme(request):
+    if request.method == 'POST':
+        theme = request.POST.__getitem__('theme')
+
 # Convert strings representing bools in export files to Python boolean objects
 # (for use with CSV exports).
 def str2bool(val):
@@ -63,11 +69,7 @@ def upload(request):
     return render_to_response('records/upload.html', {'form': form},
                               context_instance=RequestContext(request))
 
-# !! (?) Dev server isn't multithreaded, so won't see progress update requests while
-# receiving the file. Even when using an MT patch (threadedmanage.py) to run it
-# this functionality requires other things that are best left for a linux
-# apache server.
-
+# !! Multithreading
 # View to present upload progress to AJAX in upload view.
 def upload_progress(request):
     """
@@ -89,7 +91,8 @@ def upload_progress(request):
         json = simplejson.dumps(data)
         return HttpResponse(json)
     else:
-        return HttpResponseBadRequest('Server Error: You must provide X-Progress-ID header or query param.')
+        return HttpResponseBadRequest(
+            'Server Error: You must provide X-Progress-ID header or query param.')
 
 # Write contents of an uploaded file to server's disk and then call
 # insert_to_db.
@@ -174,7 +177,8 @@ def insert_to_db(f):
                              jumps=i['jumps'],
                              lastUpdated=i['lastUpdated'],
                              price=i['price'],
-                             stationID=staStations.objects.get(pk=i['stationID']),
+                             stationID=staStations.objects.get(
+                                pk=i['stationID']),
                              range=i['range'],
                              orderID=i['orderID'],
                              issueDate=i['issueDate'],
@@ -186,7 +190,8 @@ def insert_to_db(f):
             print '!! MarketRecord does not exist (is it a new item?):', detail
             continue
         except Exception as detail:
-            print '!! ERROR in insert_to_db (is it a new item?) [typeID:', i['typeID'], ']:', detail
+            print '!! ERROR in insert_to_db (is it a new item?) [typeID:', \
+                i['typeID'], ']:', detail
             continue
         else:
             r.save()
@@ -268,17 +273,18 @@ def compute_price_data(types):
             x.save()
 
 # TO DO: for all views using tables
-#        -remove some irrelevant columns from tables
-#        -paginate results
-#        -combine the all* views into one
-#        -add total volumes for currently buying/selling
-#        -add movement of units
-#        -filter by age of data, min qty
-#        -color code security rating
-#        -add best price for buy/sell globally, and for jita
-#        -display position of type in market group hierarchy
-#        --allow navigation through group hierarchy
-#        --show meta levels, jita prices, +/-20% jita prices, jita avg qty/day over last 30 days
+#        -remove some irrelevant columns from tables.
+#        -paginate results.
+#        -combine the all* views into one.
+#        -add total volumes for currently buying/selling.
+#        -add movement of units.
+#        -filter by age of data, min qty.
+#        -color code security rating.
+#        -add best price for buy/sell globally, and for jita.
+#        -display position of type in market group hierarchy.
+#        --allow navigation through group hierarchy.
+#        --show meta levels, jita prices, +/-20% jita prices,
+#          jita avg qty/day over last 30 days.
 
 # View that provides buy and sell tables of all market orders of a single item
 # type, as well as attributes of that item (e.g. duration, hp, etc)
@@ -341,11 +347,35 @@ def type_detail(request, type_id):
     
     sell = DetailTable(item.marketrecord_set.filter(bid__exact=0),
                         prefix='s-', order_by=sOrder)
+
+    # User wants to apply a selected theme now
+    if request.method == 'POST':
+        theme = ThemeSelector(request.POST)
+        
+        if theme.is_valid():
+            request.session['theme'] = theme.cleaned_data['themes']
+            
+            return render_to_response('records/type_detail.html',
+                              { 'buy': buy, 'sell': sell,
+                               'attrs': attrs, 'item': item,
+                               'theme': theme,
+                               'selected_theme': request.session['theme']},
+                              context_instance=RequestContext(request))
+    # User hasn't selected a theme to apply now
+    else:
+        theme = ThemeSelector()
+    
+    if 'theme' in request.session:
+        selected_theme = request.session['theme']
+    else:
+        selected_theme = 'dark'
+        
     
     return render_to_response('records/type_detail.html',
                               { 'buy': buy, 'sell': sell,
-                               #'buy_stats': buy_stats, 'sell_stats': sell_stats,
-                               'attrs': attrs, 'item': item },
+                               'attrs': attrs, 'item': item,
+                               'theme': theme,
+                               'selected_theme': selected_theme},
                               context_instance=RequestContext(request))
 
 # View to show every buy order in the database.
@@ -468,8 +498,8 @@ def clear_lp_db(request):
 def normalize_query(query_string,
                     findterms=re.compile(r'"([^"]+)"|(\S+)').findall,
                     normspace=re.compile(r'\s{2,}').sub):
-    ''' Splits the query string in invidual keywords, getting rid of unecessary spaces
-        and grouping quoted words together.
+    ''' Splits the query string in invidual keywords, getting rid of \
+        unecessary spaces and grouping quoted words together.
         Example:
         
         >>> normalize_query('  some random  words "with   quotes  " and   spaces')
@@ -501,10 +531,6 @@ def get_query(query_string, search_fields):
 
 # View to search market orders by item name.
 def search(request):
-    #print '** sellable:', sellable
-    #print '========= SEARCH ========='
-    #print '** REQUEST:', request
-    #print '** GET:', request.GET
     query_string = ''
     found_entries = None
     if ('q' in request.GET) and request.GET['q'].strip():
@@ -527,25 +553,40 @@ def lp_search(request):
     found_entries = None
     results = ''
     
-    if ('q' in request.GET) and request.GET['q'].strip():
-        query_string = request.GET['q']
+    print request.GET
+    
+    if ('typeid' in request.GET) and request.GET['typeid'].strip():
+        filter_form = LPSearchFilter(request.GET)
         
-        # pick what field to search here
-        entry_query = get_query(query_string, ['itemName',])
-        
-        found_entries = LPReward.objects.filter(entry_query).order_by('itemName')
-        
-        # by default, sort sell by ascending price
-        if ( request.GET.get('sort') ):
-            order = request.GET.get('sort')
-        else:
-            order = 'itemName'
-        
-        results = LPResults(found_entries, order_by=order)
+        if filter_form.is_valid():
+            query_string = filter_form.cleaned_data['typeid']
+            corp_filter = filter_form.cleaned_data['corp']
+            
+            # pick what field to search here
+            entry_query = get_query(query_string, ['itemName',])
+            
+            if corp_filter == 'All':
+                found_entries = LPReward.objects.filter(entry_query).order_by('itemName')
+            else:
+                found_entries = LPReward.objects.filter(corp__exact=corp_filter).filter(entry_query).order_by('itemName')
+            
+            # by default, sort sell by ascending price
+            if ( request.GET.get('sort') ):
+                order = request.GET.get('sort')
+            else:
+                order = 'itemName'
+            
+            results = LPResults(found_entries, order_by=order)
+            
+            # Broken for 1.4: https://github.com/bradleyayers/django-tables2/issues/42
+            #results.paginate(page=request.GET.get('page', 1))
+    else:
+        filter_form = LPSearchFilter()
 
     return render_to_response('records/lp_search.html',
                               { 'query_string': query_string,
-                               'results': results },
+                               'results': results,
+                               'filter_form': filter_form },
                               context_instance=RequestContext(request))
 
 # LP Calculator:
@@ -553,7 +594,9 @@ def lp_search(request):
 #
 # per item formula:
 #
-# profit[x] = ( sellPrice[x, (region, stat)] - store_fee[x] - other_fee[x] ) / LP_cost[x]
+# profit[x] = ( sellPrice[x, (region, stat)] - store_fee[x] - other_fee[x] )
+#             --------------------------------------------------------------
+#                                       LP_cost[x]
 #
 # Where...
 # x: item type (e.g. typeID)
@@ -675,7 +718,9 @@ def lp_calc(request):
                         count = count + 1
                     
                     return render_to_response('records/lp_calc2.html',
-                                              {'formset': formset, 'items': item_list, 'spendable': spendable},
+                                              {'formset': formset,
+                                               'items': item_list,
+                                               'spendable': spendable},
                                               context_instance=RequestContext(request))
                 # if form doesn't validate
                 else:
@@ -707,12 +752,15 @@ def lp_calc(request):
                     region = dict()
                     stat = dict()
                     for x in range(0, form_count):
-                        region[x] = request.GET.get('form-' + str(x) + '-region')
-                        stat[x] = request.GET.get('form-' + str(x) + '-stat')
+                        region[x] = request.GET.get('form-' + str(x)
+                                                    + '-region')
+                        stat[x] = request.GET.get('form-' + str(x)
+                                                  + '-stat')
                         
                     spendable = request.GET.get('spendable')
                     
-                    table_data = calculate_profits(item_list, region, stat, spendable)
+                    table_data = calculate_profits(item_list, region, stat,
+                                                   spendable)
                     table = LPCalcResultsTable(table_data)
                     
                     #print 'table_data:'
@@ -741,7 +789,8 @@ def type_lookup(request):
             value = request.GET[u'query']
             # Ignore queries shorter than length 2
             if len(value) > 2:
-                model_results = invTypes.objects.filter(typeName__icontains=value)
+                model_results = invTypes.objects.filter(
+                    typeName__icontains=value)
                 results = [ x.typeName for x in model_results ]
     json = simplejson.dumps(results)
     return HttpResponse(json, mimetype='application/json')
@@ -755,7 +804,9 @@ def lp_lookup(request):
             value = request.GET[u'query']
             # Ignore queries shorter than length 2
             if len(value) > 2:
-                model_results2 = invTypes.objects.filter(isLPreward__exact=True).filter(typeName__icontains=value).order_by('typeName')
+                model_results2 = invTypes.objects.filter(
+                    isLPreward__exact=True).filter(
+                    typeName__icontains=value).order_by('typeName')
                 results2 = [ x.typeName for x in model_results2 ]
     json = simplejson.dumps(results2)
     return HttpResponse(json, mimetype='application/json')

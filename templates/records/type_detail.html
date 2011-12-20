@@ -8,7 +8,7 @@
 {% block content %}
     <h1>{{ item.typeName }}</h1>
     <h2>Statistics</h2>
-    <div class="detail-stats">
+    <div id="detail-stats">
         <div id="buy-stats">
         <table>
             <caption>Buy Orders</caption>
@@ -17,7 +17,8 @@
             <tr class="even"><td class="stats-cat">High price</td><td class="stats-val">{{ item.highBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
             <tr class="odd"><td class="stats-cat">Low price</td><td class="stats-val">{{ item.lowBuyPrice|comma_trunc:"N/A"|isk }}</td></tr>
             <tr class="even"><td class="stats-cat">Std deviation</td><td class="stats-val">{{ item.stdDevBuy|comma_trunc:"N/A"|isk }}</td></tr>
-            <tr class="odd"><td class="stats-cat">Variance</td><td class="stats-val">{{ item.varianceBuy|floatformat:2 }}</td></tr>
+            <tr class="odd"><td class="stats-cat">Variance</td><td class="stats-val">{% if item.varianceBuy != None %}{{ item.varianceBuy|floatformat:2 }}{% else %}None{% endif %}</td></tr>
+            {% if buy.rows.count == 0 %}<tr><td class="none_found">No buy orders found.</td></tr>{% endif %}
         </table>
         </div>
         <div id="sell-stats">
@@ -28,12 +29,13 @@
             <tr class="even"><td class="stats-cat">High price</td><td class="stats-val">{{ item.highSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
             <tr class="odd"><td class="stats-cat">Low price</td><td class="stats-val">{{ item.lowSellPrice|comma_trunc:"N/A"|isk }}</td></tr>
             <tr class="even"><td class="stats-cat">Std deviation</td><td class="stats-val">{{ item.stdDevSell|comma_trunc:"N/A"|isk }}</td></tr>
-            <tr class="odd"><td class="stats-cat">Variance</td><td class="stats-val">{{ item.varianceSell|floatformat:2 }}</td></tr>
+            <tr class="odd"><td class="stats-cat">Variance</td><td class="stats-val">{% if item.varianceBuy != None %}{{ item.varianceSell|floatformat:2 }}{% else %}None{% endif %}</td></tr>
+            {% if sell.rows.count == 0 %}<tr><td class="none_found">No sell orders found.</td>{% endif %}
         </table>
         </div>
     </div>
     {% if attrs %}
-    <div class="attributes">
+    <div id="attributes">
         <h2>Attributes</h2>
         <table>
             {% for key, val in attrs.items %}

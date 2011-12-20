@@ -12,16 +12,16 @@
         {% include "/home/django/templates/records/lookup.html" %}
         <input type="submit" value="Search" />
     </form>
-    Searching is not case-sensitive and performs a logical AND on all terms.<br>
+    <font class="note">Searching is not case-sensitive and performs a logical AND on all terms.</font><br>
     {% if query_string %}
-    The number in parentheses is outstanding market orders.<br><br>
+    <font class="important">The number in parentheses is outstanding market orders.</font><br><br>
     You searched for: {{ query_string }}<br><br>
     {% endif %}
     
     {% if found_entries %}
         <p>Results:
         {% for entry in found_entries %}
-            <li><a href="/records/type_detail/{{ entry.typeID }}">{{ entry.typeName }}</a> ({{ entry.marketrecord_set.count }})</li>
+            <li><font{% if entry.marketrecord_set.count == 0 %} class="zero_count"{% endif %}><a href="/records/type_detail/{{ entry.typeID }}">{{ entry.typeName }}</a> ({{ entry.marketrecord_set.count }})</li></font>
         {% endfor %}
     {% endif %}
     </p>

@@ -11,11 +11,17 @@
     <h1>LP Reward Search</h1>
     <form method="get">
         <div>
-            {% include "/home/django/templates/records/lp_lookup.html" %}<input type="submit" value="Search" />
+            <script type="text/javascript" >
+                $(function(){
+                  setAutoComplete("id_typeid", "type_results", "/lp_lookup/?query=");
+                });
+            </script>
+                {{ filter_form.as_p }}
+                <input type="submit" value="Search" />
         </div>
     </form>
-
-Searching is not case-sensitive and performs a logical AND on all terms.
+<br>
+<font class="note">Searching is not case-sensitive and performs a logical AND on all terms.</font><br><br>
 {% if query_string %}
 You searched for: "{{ query_string }}"<br>
 {% endif %}

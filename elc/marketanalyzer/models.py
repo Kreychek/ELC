@@ -435,9 +435,3 @@ for x in invTypes.objects.filter(isLPreward__exact=True).order_by('typeName'):
 #    if x[1][len(x[1])-3:] == u'(0)':
 #        print 'removing', x[1]
 #        LPitems_with_stats.remove(x)
-
-# used in LP Calc
-regions = []
-
-for x in mapRegions.objects.all():
-    regions.append((x.regionID, x.regionName + ' (' + str(x.regionID) + ')'))

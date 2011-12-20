@@ -1,16 +1,20 @@
 <html lang=en>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base-dark.css" />
+        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base-{% if selected_theme %}{{ selected_theme }}{%else%}dark{% endif %}.css" />
         {% block head %}
         {% endblock head %}
     </head>
     <body>
         <div id="header">
+            
         </div>
         <div id="menu_border">
             <div id="menu">
                 {% include "/home/django/templates/records/navbar.html" %}
+            </div>
+            <div id="theme">
+                {% include "/home/django/templates/records/theme_select.html" %}
             </div>
         </div>
         <div id="content_border">
