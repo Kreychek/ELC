@@ -12,6 +12,7 @@ from django.core.files.uploadhandler import MemoryFileUploadHandler
 from django.utils import simplejson
 from django.template import Template, Context
 from django.forms.formsets import formset_factory
+from django.contrib.auth.decorators import login_required
 
 from marketanalyzer.models import *
 from marketanalyzer.forms import *
@@ -33,11 +34,11 @@ def convTS(ts):
     return datetime.datetime.fromtimestamp(((int(ts) - 116444736000000000) /
                                              10000000))
 
-theme = 'base-dark'
-
-def set_theme(request):
-    if request.method == 'POST':
-        theme = request.POST.__getitem__('theme')
+#theme = 'base-dark'
+#
+#def set_theme(request):
+#    if request.method == 'POST':
+#        theme = request.POST.__getitem__('theme')
 
 # Convert strings representing bools in export files to Python boolean objects
 # (for use with CSV exports).
@@ -48,6 +49,7 @@ def str2bool(val):
         return False
 
 # Accept an uploaded file that contains market orders in our CSV format.
+@login_required
 def upload(request):
     if request.method == 'POST':
         print '** POST method determined.'
@@ -64,9 +66,15 @@ def upload(request):
     else:
         print '!! No POST'
         form = UploadFileForm()
+    
+    if 'theme' in request.session:
+        selected_theme = request.session['theme']
+    else:
+        selected_theme = None
         
     # last arg is b/c of CSRF
-    return render_to_response('records/upload.html', {'form': form},
+    return render_to_response('records/upload.html', {'form': form,
+                               'selected_theme': selected_theme},
                               context_instance=RequestContext(request))
 
 # !! Multithreading
@@ -297,26 +305,6 @@ def type_detail(request, type_id):
     # Dict to hold the attributes of the item in question
     attrs = {}
     
-    #stat_types = ['Median price',
-    #              'Mean price',
-    #              'High price',
-    #              'Low price',
-    #              'Std deviation',
-    #              'Variance']
-    #
-    ## These 2 dicts' key-val pairs are used literally in the template
-    #buy_stats = dict(zip(stat_types, (item.medianBuyPrice, item.meanBuyPrice,
-    #                                  item.highBuyPrice, item.lowBuyPrice,
-    #                                  item.stdDevBuy, item.varianceBuy)))
-    #
-    #print 'buy_stats:', buy_stats
-    #                 
-    #sell_stats = dict(zip(stat_types, (item.medianSellPrice, item.meanSellPrice,
-    #                                  item.highSellPrice, item.lowSellPrice,
-    #                                  item.stdDevSell, item.varianceSell)))
-    #
-    #print 'sell_stats', sell_stats
-    
     # Fill attr dict with attribute names as keys, and the int/float as values
     # Each attribute should have either an int or a float value, not both
     for x in dgmTypeAttributes.objects.filter(typeID=item.typeID):
@@ -348,27 +336,32 @@ def type_detail(request, type_id):
     sell = DetailTable(item.marketrecord_set.filter(bid__exact=0),
                         prefix='s-', order_by=sOrder)
 
-    # User wants to apply a selected theme now
+    # User wants to apply a selected theme now.
     if request.method == 'POST':
+        #print '** typeDetail POST'
         theme = ThemeSelector(request.POST)
         
         if theme.is_valid():
             request.session['theme'] = theme.cleaned_data['themes']
-            
+            selected_theme = request.session['theme']
             return render_to_response('records/type_detail.html',
                               { 'buy': buy, 'sell': sell,
                                'attrs': attrs, 'item': item,
                                'theme': theme,
-                               'selected_theme': request.session['theme']},
+                               'selected_theme': selected_theme},
                               context_instance=RequestContext(request))
-    # User hasn't selected a theme to apply now
+            
+    # No POST; user isn't selecting a theme to apply now.
     else:
-        theme = ThemeSelector()
-    
-    if 'theme' in request.session:
-        selected_theme = request.session['theme']
-    else:
-        selected_theme = 'dark'
+        #print '** typeDetail NO POST'
+        # The user has a theme set.
+        if 'theme' in request.session:
+            #print '** theme exists:', request.session['theme']
+            theme = ThemeSelector(initial={'themes': request.session['theme']})
+            selected_theme = request.session['theme']
+        else:
+            # If no theme set in session, then use default.
+            selected_theme = 'dark'
         
     
     return render_to_response('records/type_detail.html',
@@ -377,6 +370,29 @@ def type_detail(request, type_id):
                                'theme': theme,
                                'selected_theme': selected_theme},
                               context_instance=RequestContext(request))
+    
+def set_theme(request):
+    print '** in set_theme...'
+    if request.method == 'POST':
+        theme_form = ThemeSelector(request.POST)
+        print '** set_theme POST:', request.POST
+        
+        if theme_form.is_valid():
+            from_url = request.POST['from_url']
+            theme = theme_form.cleaned_data['themes']
+            
+            print '** form is valid:', from_url, ',', theme
+            
+            request.session['theme'] = theme
+            
+            return redirect(from_url)
+        else:
+            print '!! set_theme: form INVALID. "theme" not set.'
+            return redirect(from_url)
+    else:
+        print '!! set_theme: NO POST.'
+        return redirect('/records')
+        
 
 # View to show every buy order in the database.
 def all_buy(request):
@@ -437,6 +453,7 @@ def all(request):
 #        May be a waste of time since this will rarely be run in production env.
 
 # View to allow the clearing of market orders database.
+@login_required
 def clear_db(request):
     if request.method == 'POST':
         MarketRecord.objects.all().delete()
@@ -465,7 +482,8 @@ def clear_db(request):
     return render_to_response('records/clear_db.html',
                               context_instance=RequestContext(request))
 
-# View to allow the clearing of the LP store database.    
+# View to allow the clearing of the LP store database.
+@login_required
 def clear_lp_db(request):
     if request.method == 'POST':
         LPReward.objects.all().delete()
@@ -542,9 +560,15 @@ def search(request):
         found_entries=invTypes.objects.filter(entry_query).exclude(
             marketGroupID=None).order_by('typeName')
 
+    if 'theme' in request.session:
+        selected_theme = request.session['theme']
+    else:
+        selected_theme = None
+
     return render_to_response('records/search.html',
                               { 'query_string': query_string,
-                               'found_entries': found_entries },
+                               'found_entries': found_entries,
+                               'selected_theme': selected_theme},
                               context_instance=RequestContext(request))
 
 # View to search LP store rewards.
@@ -582,11 +606,17 @@ def lp_search(request):
             #results.paginate(page=request.GET.get('page', 1))
     else:
         filter_form = LPSearchFilter()
+        
+    if 'theme' in request.session:
+        selected_theme = request.session['theme']
+    else:
+        selected_theme = None
 
     return render_to_response('records/lp_search.html',
                               { 'query_string': query_string,
                                'results': results,
-                               'filter_form': filter_form },
+                               'filter_form': filter_form,
+                               'selected_theme': selected_theme },
                               context_instance=RequestContext(request))
 
 # LP Calculator:
@@ -716,11 +746,17 @@ def lp_calc(request):
                     for form in formset:
                         form.item_name = invTypes.objects.get(pk=item_list[count]).typeName
                         count = count + 1
+                        
+                    if 'theme' in request.session:
+                        selected_theme = request.session['theme']
+                    else:
+                        selected_theme = None
                     
                     return render_to_response('records/lp_calc2.html',
                                               {'formset': formset,
                                                'items': item_list,
-                                               'spendable': spendable},
+                                               'spendable': spendable,
+                               'selected_theme': selected_theme},
                                               context_instance=RequestContext(request))
                 # if form doesn't validate
                 else:
@@ -767,20 +803,32 @@ def lp_calc(request):
                     #for k in range(0, len(table_data)):
                     #    print str(k) + ':', table_data[k]
                     
+                    if 'theme' in request.session:
+                        selected_theme = request.session['theme']
+                    else:
+                        selected_theme = None
+                    
                     return render_to_response('records/lp_calc3.html',
-                                              {'table': table},
+                                              {'table': table,
+                               'selected_theme': selected_theme},
                                               context_instance=RequestContext(request))
                     
     else:
         print '** NO GET.'
         form = LPCalcItem()
         
-    return render_to_response('records/lp_calc.html', {'form': form},
+    if 'theme' in request.session:
+        selected_theme = request.session['theme']
+    else:
+        selected_theme = None
+        
+    return render_to_response('records/lp_calc.html', {'form': form,
+                               'selected_theme': selected_theme},
                               context_instance=RequestContext(request))
 
 # TO DO: consider combining autocomplete views (add param for filter).
 
-# View for typeName autocompletion.
+# Hidden view for typeName autocompletion.
 def type_lookup(request):
     # Default return list
     results = []
@@ -795,7 +843,7 @@ def type_lookup(request):
     json = simplejson.dumps(results)
     return HttpResponse(json, mimetype='application/json')
     
-# View for typeName autocompletion, filtered to return LP rewards only.
+# Hidden view for typeName autocompletion, filtered to return LP rewards only.
 def lp_lookup(request):
     # Default return list
     results2 = []
@@ -812,6 +860,7 @@ def lp_lookup(request):
     return HttpResponse(json, mimetype='application/json')
     
 # View to handle the importing of LP store data.
+@login_required
 def import_lp_data(request):
     print '** IN import_lp_data...'
     
@@ -893,7 +942,13 @@ def import_lp_data(request):
                 
             f.close()
     
+    if 'theme' in request.session:
+        selected_theme = request.session['theme']
+    else:
+        selected_theme = None
+        
     return render_to_response('records/import_lp.html',
+                              {'selected_theme': selected_theme},
                               context_instance=RequestContext(request))
 
 # View to display LP store-related details on a particular item.
@@ -936,7 +991,13 @@ def lp_detail(request, type_id):
     sell = DetailTable(item.marketrecord_set.filter(bid__exact=0),
                         prefix='s-', order_by=sOrder)
     
+    if 'theme' in request.session:
+        selected_theme = request.session['theme']
+    else:
+        selected_theme = None
+        
     return render_to_response('records/type_detail.html',
                               { 'buy': buy, 'sell': sell, 'item': item,
-                               'attrs': attrs },
+                               'attrs': attrs,
+                               'selected_theme': selected_theme },
                               context_instance=RequestContext(request))

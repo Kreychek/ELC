@@ -1,1 +1,1 @@
-<a href="/records">Market Search</a> | <a href="/records/lp_search">LP Reward Search</a> | <a href="/records/lp_calc">LP Calculator</a> {% if user %} | Logged in as: {{ user }}{% endif %} {% if selected_theme %}Theme: {{ selected_theme }}{% endif %}
+<a href="/records">Market Search</a> | <a href="/records/lp_search">LP Reward Search</a> | <a href="/records/lp_calc">LP Calculator</a> <font class="minor_note">[{% if request.user.is_authenticated %}Logged in as: {{ request.user.username }}{% else %}You are not logged in.{% endif %}]</font>

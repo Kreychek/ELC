@@ -39,13 +39,13 @@ table.paleblue thead td:first-child {
 table.paleblue thead th,
 table.paleblue thead td {
     /*background: #FCFCFC url(../img/header-bg.gif) top left repeat-x;*/
-    background-color: white;
+    background-color: #d9eff4;
     border-bottom: 0px solid #DDD;
     padding: 2px 5px;
     font-size: 11px;
     vertical-align: middle;
     white-space: nowrap;
-    color: #666;
+    color: white;
 }
 
 table.paleblue th.security{
@@ -76,11 +76,11 @@ table.paleblue th.lastUpdated{
     width: 200px;
 }
 
-table.paleblue thead th > a:link,
+/*table.paleblue thead th > a:link,
 table.paleblue thead th > a:visited {
-    color: #666;
+    color: #77ddc9;
     display: block;
-}
+}*/
 
 table.paleblue thead th.sortable.security > a {
     background: url(../img/arrow-inactive-up.png) 28px center no-repeat;
@@ -106,11 +106,11 @@ table.paleblue thead th.sortable.desc > a {
 }
 
 table.paleblue tr.odd {
-    background-color: #EDF3FE;
+    background-color: #ceebf2;
 }
 
 table.paleblue tr.even {
-    background-color: white;
+    background-color: #d9eff4;
 }
 
 table.paleblue + ul.pagination {

@@ -48,6 +48,10 @@ font.note{
     color: #f4ee00;
 }
 
+font.minor_note{
+    font-size: 10px;
+}
+
 font.important{
     color: #ff3333;
 }

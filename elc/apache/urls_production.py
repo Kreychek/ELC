@@ -11,4 +11,11 @@ urlpatterns = patterns('',
     url(r'^upload_progress/$', 'marketanalyzer.views.upload_progress', name='upload_progress'),
     url(r'^lookup/$', 'marketanalyzer.views.type_lookup'),  # autocomplete view
     url(r'^lp_lookup/$', 'marketanalyzer.views.lp_lookup'),  # autocomplete view
+    
+)
+
+# steal the django-admin login stuff
+urlpatterns += patterns('django.contrib.auth',
+    (r'^accounts/login/$','views.login', {'template_name': 'admin/login.html'}),
+    (r'^accounts/logout/$','views.logout'),
 )

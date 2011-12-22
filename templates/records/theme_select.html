@@ -1,4 +1,9 @@
-<form method="post">{% csrf_token %}
-    {{ theme.as_table }}
+{% load url from future %}
+<form method="post" action="/records/set_theme/">{% csrf_token %}
+    <tr><th><label for="id_themes">Theme:</label></th><td><select name="themes" id="id_themes">
+    <option value="dark"{% if selected_theme == 'dark' %} selected="selected"{% endif %}>Dark</option>
+    <option value="blue"{% if selected_theme == 'blue' %} selected="selected"{% endif %}>Blue</option>
+    </select></td></tr>
+    <input type="hidden" name="from_url" id="id_from_url" value="{{ request.get_full_path }}" />
     <input type="submit" value="Apply" />
 </form>
