@@ -1,5 +1,5 @@
 {% load pretty_numbers %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen-{{ selected_theme }}.css" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen-{% if selected_theme %}{{ selected_theme }}{%else%}dark{% endif %}.css" />
 {% if item %}
 <font face=verdana>
 <p><h2>{{ item.typeName }}</h2></p>

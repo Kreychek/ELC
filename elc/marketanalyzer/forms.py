@@ -36,7 +36,7 @@ class LPCalcDetails(forms.Form):
         ('hsp', 'High Sell Price'),
         ('lsp', 'Low Sell Price')
     )
-    region = forms.MultipleChoiceField(choices=regions)
+    region = forms.MultipleChoiceField(choices=regions, initial=(10000002, u'The Forge (10000002)'))
     stat = forms.ChoiceField(choices=__priceStats)
     item_name = ''
 

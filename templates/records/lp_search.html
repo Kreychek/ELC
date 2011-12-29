@@ -4,7 +4,7 @@
     <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}css/autocomplete.css">
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/autocomplete.js"></script>
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen-{{ selected_theme }}.css" />
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen-{% if selected_theme %}{{ selected_theme }}{%else%}dark{% endif %}.css" />
 {% endblock head %}
 
 {% block content %}

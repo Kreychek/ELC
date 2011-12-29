@@ -76,6 +76,14 @@ table.paleblue th.lastUpdated{
     width: 200px;
 }
 
+table.paleblue th.profit{
+    text-align: right;
+}
+
+table.paleblue td.profit{
+    text-align: right;
+}
+
 /*table.paleblue thead th > a:link,
 table.paleblue thead th > a:visited {
     color: #77ddc9;

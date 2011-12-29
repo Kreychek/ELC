@@ -2,7 +2,10 @@ import datetime
 
 from django.db import models
 
-# Shown before CCP-sourced models are the SQL statements to make the src table
+# Models that aren't 'properly' named, and are instead pluralized, are copied
+# from the CCP dump.
+
+# Shown before CCP-sourced models are the SQL statements to make the src table.
 
 #############################################################################
 #CREATE TABLE "mapRegions" (
@@ -421,12 +424,30 @@ class dgmAttributeTypes(models.Model):
     highIsGood = models.SmallIntegerField('highIsGood')
     categoryID = models.ForeignKey(dgmAttributeCategories, to_field='categoryID', db_index=True, db_column='categoryID')
 
-# create a list of invTypes which are purchaseable with LP
+# Create a list of invTypes which are purchaseable with LP for use in the
+# LPCalcItem form on first step of LP Calc.
 LPitems = []
 
 for x in invTypes.objects.filter(isLPreward__exact=True).order_by('typeName'):
-    if len(MarketRecord.objects.filter(typeID__exact=x.typeID)) != 0:
-        LPitems.append((x.typeID, x.typeName + ' [' + str(x.typeID) + ']' + ' (' + str(len(MarketRecord.objects.filter(typeID__exact=x.typeID))) + ')'))
+    if (len(MarketRecord.objects.filter(typeID__exact=x.typeID).filter(bid__exact=True)) != 0) and \
+    (len((MarketRecord.objects.filter(typeID__exact=x.typeID).filter(bid__exact=False))) != 0):
+        LPitems.append((x.typeID, x.typeName + ' [' + str(x.typeID) + ']' + \
+        ' (B:' + str(len(MarketRecord.objects.filter(typeID__exact=x.typeID).filter(bid__exact=True))) + \
+        ' S:' + str(len(MarketRecord.objects.filter(typeID__exact=x.typeID).filter(bid__exact=False))) + ')'))
+
+import os
+os.environ['MPLCONFIGDIR ']='/home/django/.matplotlib'
+os.environ['HOME']='/home/django/'
+
+#from raven import Client
+#
+#client = Client(servers=['http://sentry.local/store/'],)
+#
+#try:
+#    1/0
+#except ZeroDivisionError:
+#    ident = client.get_ident(client.create_from_exception())
+#    print "Exception caught; reference is %%s" % ident
 
 #LPitems_with_stats = LPitems
 #

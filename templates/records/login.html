@@ -1,0 +1,5 @@
+{% if request.user.is_authenticated %}
+   You are logged in as {{ request.user.username }}. <a href="/logout">Logout</a>
+{% else %}
+   You are not logged in. <a href="/accounts/login">Login</a> (If you get an error, hit back 2x and refresh after submitting login information.)
+{% endif %}

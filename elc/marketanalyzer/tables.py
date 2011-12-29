@@ -103,12 +103,13 @@ class LPResults(tables.Table):
 class LPCalcResultsTable(tables.Table):
     itemName = tables.Column(verbose_name='Item')
     regionName = tables.Column(verbose_name='Region')
-    sellPrice = tables.Column(verbose_name='Sell Price')
+    sellPrice = tables.Column(verbose_name='Per Unit Sell Price')
     storeFee = tables.Column(verbose_name='Store Fee')
     otherFee = tables.Column(verbose_name='Other Fee')
     lpCost = tables.Column(verbose_name='LP Cost')
-    profitPer = tables.Column()
+    isk_per_lp = tables.Column(verbose_name='ISK/LP')
     profit = tables.Column()
+    qty = tables.Column(verbose_name='Selling in Qty')
     
     def render_sellPrice(self, value):
         return '%s' % locale.format('%.2f', value, grouping=True)
@@ -119,7 +120,7 @@ class LPCalcResultsTable(tables.Table):
     def render_otherFee(self, value):
         return '%s' % locale.format('%.2f', value, grouping=True)
     
-    def render_profitPer(self, value):
+    def render_isk_per_lp(self, value):
         return '%s' % locale.format('%.2f', value, grouping=True)
     
     def render_profit(self, value):
@@ -127,3 +128,4 @@ class LPCalcResultsTable(tables.Table):
     
     class Meta:
         attrs = {'class': 'paleblue'}
+        sequence = ('itemName', 'regionName', 'sellPrice',  'qty', 'storeFee', 'otherFee', 'lpCost', 'isk_per_lp', 'profit')

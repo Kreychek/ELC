@@ -34,9 +34,11 @@ urlpatterns = patterns('marketanalyzer.views',
     url(r'^import_lp/$', 'import_lp_data'),
     url(r'^lp_search/$', 'lp_search'),
     url(r'^lp_detail/(?P<type_id>\d+)/$', 'lp_detail'),
-    url(r'^set_theme/$', 'set_theme')
+    url(r'^set_theme/$', 'set_theme'),
     #url(r'^lookup/$', 'type_lookup'),
 )
 
 # for dev server only
 #urlpatterns += staticfiles_urlpatterns()
+
+urlpatterns += url(r'^simple.png$', 'marketanalyzer.charts.simple'),

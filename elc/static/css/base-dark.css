@@ -131,37 +131,46 @@ td.attr-val{
 
 /* top nav bar */
 #menu_border{
+    position: relative;
+    top: 10px;
     padding: 10px 10px 10px 10px;
     margin: auto;
+    margin-top: 5px;
     width: 96%;
-    height: 15px;
+    height: 20px;
     background:url("/static/border.png") repeat;
 }
 
 #menu{
-    padding-top: 1px;
-    padding-bottom: 1px;
-    margin-left: 10px;
-    margin-right: 10px;
-    width: auto;
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    width: 350px;
     font-size: 13px;
-    float: left;
+}
+
+#login{
+    position: absolute;
+    top: 8px;
+    left: 400px;
+    margin: auto;
+    width: 700px;
+    font-size: 9pt;
 }
 
 #theme{
-    padding-top: 1px;
-    padding-bottom: 1px;
-    float: right;
-    height: auto;
-    width: auto;
+    position: absolute;
+    top: 8px;
+    right: 10px;
 }
 
 /* main content */
 #content_border{
     width: 96%;
-    background:url("/static/border.png") repeat;
+    background: url("/static/border.png") repeat;
     padding: 10px 10px 10px 10px;
     margin: auto;
+    margin-top: 10px;
     margin-bottom: 15px;
     float: none;
 }

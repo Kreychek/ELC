@@ -13,6 +13,7 @@ from django.utils import simplejson
 from django.template import Template, Context
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
 
 from marketanalyzer.models import *
 from marketanalyzer.forms import *
@@ -649,7 +650,7 @@ def calculate_profits(items, region, stat, spendable):
         item = invTypes.objects.get(pk=items[x])
         item_name = item.typeName
         region_name = mapRegions.objects.get(regionID=region[x]).regionName
-        profit_per = None
+        isk_per_lp = None
         profit = None
         
         # start limiting our query to typeID, regionID
@@ -674,25 +675,26 @@ def calculate_profits(items, region, stat, spendable):
             other_fee = int(0)
             lp_cost = int(lp_reward.LPcost)
             
-            profit_per = (sell_price - store_fee - other_fee) / float(lp_cost)
+            isk_per_lp = ((sell_price * lp_reward.qty) - store_fee - other_fee) / float(lp_cost)
             buyable = int(int(spendable) / lp_cost)
-            profit = profit_per * buyable * lp_cost
+            profit = isk_per_lp * buyable * lp_cost
             
-            # profit_per = (isk/lp) for a each unit
-            # total profit (isk) = profit_per (isk/lp) * buyable (n/a) * lp_cost (1/lp)
+            # isk_per_lp = (isk/lp) for a each unit
+            # total profit (isk) = isk_per_lp (isk/lp) * buyable (n/a) * lp_cost (1/lp)
         
         except TypeError as e:
             print '!! Error in calculate_profits (sell_price assignment):', e
         
-        if not profit_per:
-            profit_per = 'ERROR'
+        if not isk_per_lp:
+            isk_per_lp = 'ERROR'
         if not profit:
             profit = 'ERROR'
         
         data.append({'itemName': item_name, 'regionName': region_name,
                    'sellPrice': sell_price, 'storeFee': store_fee,
                    'otherFee': other_fee, 'lpCost': lp_cost,
-                   'profitPer': profit_per, 'profit': profit})
+                   'isk_per_lp': isk_per_lp, 'profit': profit,
+                   'qty': lp_reward.qty})
         
     return data
 
@@ -712,14 +714,14 @@ def calculate_profits(items, region, stat, spendable):
 # 'items' are stored with a semi-colon following each typeID in the HTML.
 def lp_calc(request):
     if request.method == 'GET':
-        print '** lp_calc: GET:', request.GET
+        #print '** lp_calc: GET:', request.GET
 
         form = LPCalcItem(request.GET)
         
         # No 'step' param, so user must've just gotten here and hasn't
         # inputted anything yet.
         if 'step' not in request.GET:
-            print '** On STEP 0...'
+            print '** No STEP in GET.'
         else:
             # We're on step 1, so we're getting regions and price stats for
             # each item selected in step 0.
@@ -797,7 +799,14 @@ def lp_calc(request):
                     
                     table_data = calculate_profits(item_list, region, stat,
                                                    spendable)
-                    table = LPCalcResultsTable(table_data)
+                    
+                    # by default, sort by descending profit
+                    if ( request.GET.get('sort') ):
+                        order = request.GET.get('sort')
+                    else:
+                        order = '-profit'
+                    
+                    table = LPCalcResultsTable(table_data, order_by=order)
                     
                     #print 'table_data:'
                     #for k in range(0, len(table_data)):
@@ -1001,3 +1010,11 @@ def lp_detail(request, type_id):
                                'attrs': attrs,
                                'selected_theme': selected_theme },
                               context_instance=RequestContext(request))
+
+# Hidden view to log user out, throws no errors if user isn't logged in.    
+def logout_view(request):
+    logout(request)
+    
+    print request.META
+    
+    return redirect(request.META['HTTP_REFERER'])
