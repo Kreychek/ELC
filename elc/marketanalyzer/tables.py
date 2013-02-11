@@ -88,6 +88,7 @@ class DetailTable(RecordTable):
                     'price', 'volRemaining', '...')
         exclude = {'id', 'typeID', 'range', 'orderID', 'jumps', 'bid', }
 
+# TO DO: Print each req'd item on a separate line, or alternate font color
 # Table to display results of an LP search.
 class LPResults(tables.Table):
     corp = tables.Column(verbose_name='Corporation')
@@ -95,6 +96,7 @@ class LPResults(tables.Table):
     qty = tables.Column(verbose_name='Qty')
     ISKcost = tables.Column(verbose_name='ISK Cost')
     LPcost = tables.Column(verbose_name='LP Cost')
+    required = tables.Column(verbose_name="Req'd Item(s)")
     
     class Meta:
         attrs = {'class': 'paleblue'}

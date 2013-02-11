@@ -1,4 +1,4 @@
-import datetime
+import datetime, os
 
 from django.db import models
 
@@ -239,8 +239,8 @@ class invTypes(models.Model):
                                        verbose_name='Group ID')
     typeName = models.CharField(max_length=100, verbose_name='Item Name', db_index=True)
     description = models.CharField(max_length=3000)
-    graphicID = models.SmallIntegerField(null=True, blank=True,
-                                         verbose_name='Graphic ID')
+    #graphicID = models.SmallIntegerField(null=True, blank=True,
+    #                                     verbose_name='Graphic ID')
     radius = models.FloatField()
     mass = models.FloatField()
     volume = models.FloatField()
@@ -352,22 +352,130 @@ class MarketRecord(models.Model):
         
     was_updated_today.short_description = 'Updated today?'
 
-# TO DO: Add FK for itemName and/or typeID, so we can easily resolve those from templates, etc
-class LPReward(models.Model):
-    """LP Store entries for each item, containing Corporation, Reward Name, QTY, LP Cost, ISK Cost, Req'd Items"""
-    corp = models.CharField('Corporation', max_length=100)
-    itemName = models.CharField('Item Name', max_length=100)
-    qty = models.IntegerField('Qty')
-    LPcost = models.IntegerField('LP Cost')
-    ISKcost = models.IntegerField('ISK Cost')
-    
-    # this field will hold a list of the items required and their assoc'd qty
-    # format: typeID_of_n0, qty_of_n0, typeID_of_n1, qty_of_n1, ...
-    # (should always be an even amt of entries b/c of pairing)
-    requiredItems = models.CommaSeparatedIntegerField('Required Items', max_length = 100)
+#-- Table: marketanalyzer_evenames
+#
+#-- DROP TABLE marketanalyzer_evenames;
+#
+#CREATE TABLE marketanalyzer_evenames
+#(
+#  itemid integer NOT NULL,
+#  itemname character varying(100) DEFAULT NULL::character varying,
+#  categoryid smallint,
+#  groupid smallint,
+#  typeid integer,
+#  CONSTRAINT marketanalyzer_evenames_pkey PRIMARY KEY (itemid )
+#)
+#WITH (
+#  OIDS=FALSE
+#);
+#ALTER TABLE marketanalyzer_evenames
+#  OWNER TO postgres;
+#
+#-- Index: marketanalyzer_evenames_categoryid_idx
+#
+#-- DROP INDEX marketanalyzer_evenames_categoryid_idx;
+#
+#CREATE INDEX marketanalyzer_evenames_categoryid_idx
+#  ON marketanalyzer_evenames
+#  USING btree
+#  (categoryid );
+#
+#-- Index: marketanalyzer_evenames_groupid_idx
+#
+#-- DROP INDEX marketanalyzer_evenames_groupid_idx;
+#
+#CREATE INDEX marketanalyzer_evenames_groupid_idx
+#  ON marketanalyzer_evenames
+#  USING btree
+#  (groupid );
+#
+#-- Index: marketanalyzer_evenames_typeid_idx
+#
+#-- DROP INDEX marketanalyzer_evenames_typeid_idx;
+#
+#CREATE INDEX marketanalyzer_evenames_typeid_idx
+#  ON marketanalyzer_evenames
+#  USING btree
+#  (typeid );
+
+class evenames(models.Model):
+    itemid = models.IntegerField(primary_key=True, verbose_name='Item ID')
+    itemname = models.CharField(max_length=100, verbose_name='Item Name')
+    categoryid = models.SmallIntegerField(verbose_name='Category ID', db_index=True)
+    groupid = models.SmallIntegerField(verbose_name='Group ID', db_index=True)
+    typeid = models.IntegerField(verbose_name='Type ID', db_index=True)
     
     def __unicode__(self):
-        return self.corp + ' - ' + self.itemName
+        return self.itemname
+    
+# lpshop.csv format
+#
+#LoyaltyStoreItemId;
+#CorporationId;
+#FactionId;
+#LoyaltyPointCost;
+#IskCost;
+#PrimaryAwardTypeId;
+#PrimaryAwardQuantity;
+#Requirement1TypeId;
+#Requirement1Quantity;
+#Requirement2TypeId;
+#Requirement2Quantity;
+#Requirement3TypeId;
+#Requirement3Quantity;
+#Requirement4TypeId;
+#Requirement4Quantity;
+#Requirement5TypeId;
+#Requirement5Quantity;
+
+class LP_Reward(models.Model):
+    """LP Store entries for each item, from every NPC corporation."""
+    LP_store_id = models.IntegerField('LP Store ID', primary_key=True)
+    corp_id = models.ForeignKey(to=evenames, to_field='itemid',
+                                verbose_name='Corporation ID',
+                                related_name='lp_corp',
+                                db_index=True)    
+    faction_id = models.ForeignKey(to=evenames, to_field='itemid',
+                                   verbose_name='Faction ID',
+                                   related_name='lp_faction',
+                                   db_index=True)
+    LP_cost = models.IntegerField('LP Cost')
+    ISK_cost = models.IntegerField('ISK Cost')
+    award_type_id = models.ForeignKey(to=invTypes, to_field='typeID',
+                                      related_name='lp_award_type_id',
+                                      verbose_name='Award Type ID',
+                                      db_index=True)
+    award_qty = models.IntegerField('Award Qty')
+    
+    # Required items (a reward will at most require 5 types)
+    req_1_type_id = models.ForeignKey(to=invTypes, to_field='typeID',
+                                      verbose_name='Req 1 Type ID',
+                                      related_name='lp_req_1',
+                                      blank=True, null=True)
+    req_1_qty = models.IntegerField('Req 1 Qty', blank=True, null=True)
+    req_2_type_id = models.ForeignKey(to=invTypes, to_field='typeID',
+                                      verbose_name='Req 2 Type ID',
+                                      related_name='lp_req_2',
+                                      blank=True, null=True)
+    req_2_qty = models.IntegerField('Req 2 Qty', blank=True, null=True)
+    req_3_type_id = models.ForeignKey(to=invTypes, to_field='typeID',
+                                      verbose_name='Req 3 Type ID',
+                                      related_name='lp_req_3',
+                                      blank=True, null=True)
+    req_3_qty = models.IntegerField('Req 3 Qty', blank=True, null=True)
+    req_4_type_id = models.ForeignKey(to=invTypes, to_field='typeID',
+                                      verbose_name='Req 4 Type ID',
+                                      related_name='lp_req_4',
+                                      blank=True, null=True)
+    req_4_qty = models.IntegerField('Req 4 Qty', blank=True, null=True)
+    req_5_type_id = models.ForeignKey(to=invTypes, to_field='typeID',
+                                      verbose_name='Req 5 Type ID',
+                                      related_name='lp_req_5',
+                                      blank=True, null=True)
+    req_5_qty = models.IntegerField('Req 5 Qty', blank=True, null=True)
+    
+    def __unicode__(self):
+        return str(self.LP_store_id)
 
 # FOR TESTING PURPOSES ONLY
 class modified(models.Model):
@@ -424,20 +532,19 @@ class dgmAttributeTypes(models.Model):
     highIsGood = models.SmallIntegerField('highIsGood')
     categoryID = models.ForeignKey(dgmAttributeCategories, to_field='categoryID', db_index=True, db_column='categoryID')
 
-# Create a list of invTypes which are purchaseable with LP for use in the
-# LPCalcItem form on first step of LP Calc.
-LPitems = []
+# !!!!!!!!!
+#
+# Below is stuff to run once at server start
+#
+# This should go elsewhere, since apache spawns a new child for
+# each X connections, as specified in by "MaxRequestsPerChild" in apache2.conf.
+#
+# !!!!!!!!!
 
-for x in invTypes.objects.filter(isLPreward__exact=True).order_by('typeName'):
-    if (len(MarketRecord.objects.filter(typeID__exact=x.typeID).filter(bid__exact=True)) != 0) and \
-    (len((MarketRecord.objects.filter(typeID__exact=x.typeID).filter(bid__exact=False))) != 0):
-        LPitems.append((x.typeID, x.typeName + ' [' + str(x.typeID) + ']' + \
-        ' (B:' + str(len(MarketRecord.objects.filter(typeID__exact=x.typeID).filter(bid__exact=True))) + \
-        ' S:' + str(len(MarketRecord.objects.filter(typeID__exact=x.typeID).filter(bid__exact=False))) + ')'))
-
-import os
 os.environ['MPLCONFIGDIR ']='/home/django/.matplotlib'
 os.environ['HOME']='/home/django/'
+
+print '=============================================================='
 
 #from raven import Client
 #

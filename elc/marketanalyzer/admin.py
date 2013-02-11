@@ -66,10 +66,13 @@ class staStationsAdmin(admin.ModelAdmin):
 class modifiedAdmin(admin.ModelAdmin):
     pass
 
-class LPRewardAdmin(admin.ModelAdmin):
-    list_display = ('corp', 'itemName', 'qty', 'LPcost', 'ISKcost', 'requiredItems')
-    list_filter = ['corp', 'itemName']
-    search_fields = ['itemName']
+class LP_RewardAdmin(admin.ModelAdmin):
+    list_display = ('LP_store_id', 'corp_id', 'LP_cost', 'ISK_cost', 'award_type_id', 'award_qty')
+    search_fields = ['corp_id', 'award_type_id']
+
+class evenamesAdmin(admin.ModelAdmin):
+    list_display = ('itemid', 'itemname', 'categoryid', 'groupid', 'typeid')
+    list_filter = ['categoryid', 'groupid']
 
 admin.site.register(MarketRecord, MarketAdmin)
 admin.site.register(invTypes, invTypesAdmin)
@@ -81,4 +84,5 @@ admin.site.register(mapConstellations, mapConstellationsAdmin)
 admin.site.register(mapSolarSystems, mapSolarSystemsAdmin)
 admin.site.register(staStations, staStationsAdmin)
 admin.site.register(modified, modifiedAdmin)
-admin.site.register(LPReward, LPRewardAdmin)
+admin.site.register(LP_Reward, LP_RewardAdmin)
+admin.site.register(evenames, evenamesAdmin)

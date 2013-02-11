@@ -1,5 +1,6 @@
 import os.path
 import csv, glob, sys, string, math, datetime, re, locale, timeit, logging
+from time import time
 
 from django.template import RequestContext
 from django.core.urlresolvers import reverse
@@ -225,7 +226,7 @@ def compute_price_data(types):
             # store query results now, in case they change during computation
             item = invTypes.objects.get(typeID=t)
         except invTypes.DoesNotExist as detail:
-            print '!! `item` not found in query:', detail
+            print '!! "item" not found in query:', detail
             continue
         else:
             buyOrders = item.marketrecord_set.filter(bid=True)
@@ -243,7 +244,7 @@ def compute_price_data(types):
             item.stdDevBuy = buyOrders.aggregate(StdDev('price')).values()[0]
             item.varianceBuy = buyOrders.aggregate(Variance('price')).values()[0]
             
-    
+            
             # setup stuff for finding medians
             for rec in buyOrders:
                 buyPriceList.append(rec.price)
@@ -253,9 +254,6 @@ def compute_price_data(types):
                 
             bLen = len(buyPriceList)
             sLen = len(sellPriceList)
-            
-            #print '** len(buyPriceList):', bLen
-            #print '** len(sellPriceList):', sLen
             
             # calculate medians
             if bLen == 0:
@@ -396,6 +394,7 @@ def set_theme(request):
         
 
 # View to show every buy order in the database.
+@login_required
 def all_buy(request):
     # by default, sort by descending price
     if ( request.GET.get('sort') ):
@@ -409,6 +408,7 @@ def all_buy(request):
                               context_instance=RequestContext(request))
 
 # View to show every sell order in the database.
+@login_required
 def all_sell(request):
     # by default, sort by ascending price
     if ( request.GET.get('sort') ):
@@ -426,6 +426,7 @@ def all_sell(request):
 # with multiple tables so hold off?
 
 # View to show all market orders in the database.
+@login_required
 def all(request):
     # by default, sort buy orders by descending price
     if ( request.GET.get('b-sort') ):
@@ -487,7 +488,7 @@ def clear_db(request):
 @login_required
 def clear_lp_db(request):
     if request.method == 'POST':
-        LPReward.objects.all().delete()
+        LP_Reward.objects.all().delete()
         
         # reset isLPreward for all invTypes
         for type in invTypes.objects.all():
@@ -500,13 +501,14 @@ def clear_lp_db(request):
             #else:
             #    # value was valid ASCII data
             #    pass
-            
-            try:
-                print '** Clearing isLPreward for:', type.typeName
-            except UnicodeEncodeError as e:
-                print '!! Weird character(s) in name: ', e
-            type.isLPreward = False
-            type.save()
+            if type.isLPreward == True:
+                try:
+                    print '** Clearing isLPreward for:', type.typeName
+                except UnicodeEncodeError as e:
+                    print '** Unable to display name for cleared item: ', e
+                    
+                type.isLPreward = False
+                type.save()
                 
         messages.add_message(request, messages.SUCCESS,
                              'All LP rewards and isLPreward attrs have been cleared!')
@@ -574,9 +576,11 @@ def search(request):
 
 # View to search LP store rewards.
 def lp_search(request):
+    start = time()
     query_string = ''
     found_entries = None
     results = ''
+    table_data = []
     
     print request.GET
     
@@ -588,12 +592,22 @@ def lp_search(request):
             corp_filter = filter_form.cleaned_data['corp']
             
             # pick what field to search here
-            entry_query = get_query(query_string, ['itemName',])
+            entry_query = get_query(query_string, ['typeName',])
             
             if corp_filter == 'All':
-                found_entries = LPReward.objects.filter(entry_query).order_by('itemName')
+                found_entries = invTypes.objects.filter(isLPreward__exact=True).filter(entry_query)
+                #found_entries = LP_Reward.objects.filter(entry_query)
             else:
-                found_entries = LPReward.objects.filter(corp__exact=corp_filter).filter(entry_query).order_by('itemName')
+                #corp = evenames.get(itemname=corp_filter)
+                found_entries = invTypes.objects.filter(isLPreward__exact=True).filter(entry_query).filter(corp=corp_filter)
+                #found_entries = LP_Reward.objects.filter(corp_id__exact=corp.itemname).filter(entry_query)
+                
+            rewards = []
+            for i in found_entries:
+                for j in LP_Reward.objects.filter(award_type_id__exact=i.typeID):
+                    rewards.append(j)
+                    
+            print '** len(rewards):', len(rewards)
             
             # by default, sort sell by ascending price
             if ( request.GET.get('sort') ):
@@ -601,12 +615,34 @@ def lp_search(request):
             else:
                 order = 'itemName'
             
-            results = LPResults(found_entries, order_by=order)
+            for x in rewards:
+                reqd = ''
+                if x.req_1_type_id:
+                    reqd = str(x.req_1_type_id.typeName) + ' x ' + str(x.req_1_qty)
+                    if x.req_2_type_id:
+                        reqd += ', ' + str(x.req_2_type_id.typeName) + ' x ' + str(x.req_2_qty)
+                        if x.req_3_type_id:
+                            reqd += ', ' + str(x.req_3_type_id.typeName) + ' x ' + str(x.req_3_qty)
+                            if x.req_4_type_id:
+                                reqd += ', ' + str(x.req_4_type_id.typeName) + ' x ' + str(x.req_4_qty)
+                                if x.req_5_type_id:
+                                    reqd += ', ' + str(x.req_5_type_id.typeName) + ' x ' + str(x.req_5_qty)
+                                    
+                table_data.append({'corp': x.corp_id.itemname,
+                                   'itemName': x.award_type_id.typeName,
+                                   'qty': x.award_qty,
+                                   'ISKcost': x.ISK_cost,
+                                   'LPcost': x.LP_cost,
+                                   'required': reqd})
+            
+            results = LPResults(table_data, order_by=order)
             
             # Broken for 1.4: https://github.com/bradleyayers/django-tables2/issues/42
             #results.paginate(page=request.GET.get('page', 1))
     else:
         filter_form = LPSearchFilter()
+        
+    print '** elapsed time: ', str(time() - start)
         
     if 'theme' in request.session:
         selected_theme = request.session['theme']
@@ -636,20 +672,29 @@ def lp_search(request):
 #            (e.g. cost of buying T1 ammo to convert to faction ammo)
 # sellPrice: -determined by region & price stat (e.g. mean buy price)
 
-# Accepts iterable of typeID, regionID, and __priceStats.
+# Accepts iterables of typeID, regionID, and __priceStats. Also accepts corp_name.
 # Returns a dict containing table data each type, to fill an LPCalcResultsTable.
 #
 # TO DO: -figure out other_fee (currently set to 0)
 #        -make sure prices/fees/etc are PER UNIT or PER PURCHASE SIZE and calc
 #         profits accordingly! (ex. faction ammo uses multiples of 5k)
 
-def calculate_profits(items, region, stat, spendable):
-    count = len(items)
+def calculate_profits(items, region, stat, spendable, corp_id):
     data = list()
-    for x in range(0, count):
-        item = invTypes.objects.get(pk=items[x])
+    #corp_id = evenames.objects.get(itemname__exact=corp_name)
+    
+    # iterate over each LP reward we recieve
+    for x in range(0, len(items)):
+        
+        # get a ref to the item
+        item = invTypes.objects.get(typeID=items[x])
+        
+        # easy access to item name
         item_name = item.typeName
+        
+        # name of the region we're selling it in
         region_name = mapRegions.objects.get(regionID=region[x]).regionName
+        
         isk_per_lp = None
         profit = None
         
@@ -670,31 +715,32 @@ def calculate_profits(items, region, stat, spendable):
                 sell_price = q.filter(bid__exact=False).aggregate(tmp=Min('price'))['tmp']
             
             # We assume each LP-bought item will cost the same ISK, LP, and other_fee
-            lp_reward = LPReward.objects.filter(itemName__exact=item_name)[0]
-            store_fee = int(lp_reward.ISKcost)
-            other_fee = int(0)
-            lp_cost = int(lp_reward.LPcost)
+            lp_reward = LP_Reward.objects.filter(corp_id__exact=corp_id).get(award_type_id__exact=item.typeID)
             
-            isk_per_lp = ((sell_price * lp_reward.qty) - store_fee - other_fee) / float(lp_cost)
+            store_fee = int(lp_reward.ISK_cost)
+            other_fee = int(0)
+            lp_cost = int(lp_reward.LP_cost)
+            
+            isk_per_lp = ((sell_price * lp_reward.award_qty) - store_fee - other_fee) / float(lp_cost)
             buyable = int(int(spendable) / lp_cost)
             profit = isk_per_lp * buyable * lp_cost
             
             # isk_per_lp = (isk/lp) for a each unit
             # total profit (isk) = isk_per_lp (isk/lp) * buyable (n/a) * lp_cost (1/lp)
-        
+            
         except TypeError as e:
             print '!! Error in calculate_profits (sell_price assignment):', e
-        
-        if not isk_per_lp:
-            isk_per_lp = 'ERROR'
-        if not profit:
-            profit = 'ERROR'
+            
+        #if not isk_per_lp:
+        #    isk_per_lp = 'ERROR'
+        #if not profit:
+        #    profit = 'ERROR'
         
         data.append({'itemName': item_name, 'regionName': region_name,
                    'sellPrice': sell_price, 'storeFee': store_fee,
                    'otherFee': other_fee, 'lpCost': lp_cost,
                    'isk_per_lp': isk_per_lp, 'profit': profit,
-                   'qty': lp_reward.qty})
+                   'qty': lp_reward.award_qty})
         
     return data
 
@@ -714,27 +760,76 @@ def calculate_profits(items, region, stat, spendable):
 # 'items' are stored with a semi-colon following each typeID in the HTML.
 def lp_calc(request):
     if request.method == 'GET':
-        #print '** lp_calc: GET:', request.GET
-
-        form = LPCalcItem(request.GET)
+        print '====== ** lp_calc: GET:', request.GET
         
-        # No 'step' param, so user must've just gotten here and hasn't
-        # inputted anything yet.
+        # When a user first arrives at the LP Calc page, this is what should run
         if 'step' not in request.GET:
-            print '** No STEP in GET.'
+            print '----- ** No STEP in GET; On STEP 1...'
+            form = LPCalcStep1()          
         else:
-            # We're on step 1, so we're getting regions and price stats for
-            # each item selected in step 0.
+            # 'step' param is the step user just completed.
+            
+            # We're on step 2, so we're getting the item(s) now.
             if request.GET.get('step') == '1':
-                print '** On STEP 1...'
+                print '----- ** On STEP 2...'
                 
-                #print 'cleaned_data:', form.cleaned_data
+                form = LPCalcStep1(request.GET)
+                
+                #print '** LPCalcStep1 after being bound to GET data:', form
                 
                 if form.is_valid():
                     print '** Form validated.'
                     
-                    item_list = request.GET.getlist('item')
-                    #print '** item_list:', item_list
+                    spendable = form.cleaned_data['spendable']
+                    corp_name = form.cleaned_data['corp']
+                    corp = evenames.objects.get(itemname__exact=corp_name)
+                    
+                    print '** Generating step2_form using corp_id:', corp.itemid
+                    
+                    #step2_form = LPCalcStep2(corp=corp.itemid)
+                    params = dict()
+                    params['corp'] = request.GET['corp']
+                    step2_form = LPCalcStep2(request.GET)
+                    
+                    if 'theme' in request.session:
+                        selected_theme = request.session['theme']
+                    else:
+                        selected_theme = None
+                        
+                    #print step2_form
+                    
+                    return render_to_response('records/lp_calc2.html',
+                                              {'form': step2_form,
+                                               'spendable': spendable,
+                                               'corp': corp,
+                                               'selected_theme': selected_theme},
+                                              context_instance=RequestContext(request))
+                else: # Step 1 did not validate
+                    print '** Step 1 did not validate:', form.errors
+                    
+                    form = LPCalcStep1()
+                    
+                    return render_to_response('records/lp_calc.html',
+                                              {'form': form,
+                                               'selected_theme': selected_theme},
+                                              context_instance=RequestContext(request))
+                    
+            # We're on step 2, so we're getting regions and price stats for
+            # each item selected in step 1.5.
+            elif request.GET.get('step') == '2':
+                print '----- ** On STEP 3...'
+                
+                #print 'cleaned_data:', form.cleaned_data
+                corp_id = evenames.objects.filter(itemname__exact=request.GET['corp'])[0]
+                print 'using corp_id:', corp_id.itemid
+                
+                form2 = LPCalcStep2(request.GET)
+                
+                if form2.is_valid():
+                    print '** Form validated.'
+                    
+                    item_list = request.GET.getlist('items')
+                    print '** item_list:', item_list
                     
                     LPCalcDetailsFormSet = formset_factory(LPCalcDetails,
                                               extra=len(item_list))
@@ -743,6 +838,8 @@ def lp_calc(request):
                     count = 0
                     
                     spendable = int(request.GET.get('spendable'))
+                    
+                    print '** spendable:', spendable
                     
                     # Get the item name into each form; use as label on render.
                     for form in formset:
@@ -754,23 +851,26 @@ def lp_calc(request):
                     else:
                         selected_theme = None
                     
-                    return render_to_response('records/lp_calc2.html',
+                    return render_to_response('records/lp_calc3.html',
                                               {'formset': formset,
                                                'items': item_list,
                                                'spendable': spendable,
-                               'selected_theme': selected_theme},
+                                               'corp_id': corp_id.itemid,
+                                               'selected_theme': selected_theme},
                                               context_instance=RequestContext(request))
                 # if form doesn't validate
                 else:
-                    print 'step 1 didnt validate:'
-                    for field in form:
+                    print '!! Step 2 did not validate:', form2.errors
+                    
+                    for field in form2:
                         print field.errors
+                        
+                    print '  Non-field errors:', form2.non_field_errors()
                     
             # We have the item list and associated region-stat combos,
             # so perform the required calculations and display the result.
-            elif request.GET.get('step') == '2':
-                print '** ON STEP 2...'
-                #print '** GET:', request.GET
+            elif request.GET.get('step') == '3':
+                print '----- ** ON STEP 4...'
                 
                 # Recreate the formset as it was made for this particular query
                 LPCalcDetailsFormSet = formset_factory(LPCalcDetails,
@@ -798,7 +898,7 @@ def lp_calc(request):
                     spendable = request.GET.get('spendable')
                     
                     table_data = calculate_profits(item_list, region, stat,
-                                                   spendable)
+                                                   spendable, request.GET['corp_id'])
                     
                     # by default, sort by descending profit
                     if ( request.GET.get('sort') ):
@@ -817,19 +917,22 @@ def lp_calc(request):
                     else:
                         selected_theme = None
                     
-                    return render_to_response('records/lp_calc3.html',
+                    return render_to_response('records/lp_calc4.html',
                                               {'table': table,
                                'selected_theme': selected_theme},
                                               context_instance=RequestContext(request))
                     
     else:
         print '** NO GET.'
-        form = LPCalcItem()
+        form = LPCalcStep1()
         
     if 'theme' in request.session:
         selected_theme = request.session['theme']
     else:
         selected_theme = None
+        
+    # fallback to step 1 in case of weirdness
+    form = LPCalcStep1()
         
     return render_to_response('records/lp_calc.html', {'form': form,
                                'selected_theme': selected_theme},
@@ -873,79 +976,67 @@ def lp_lookup(request):
 def import_lp_data(request):
     print '** IN import_lp_data...'
     
-    path = '/home/django/elc/eve_lp_store.csv'
-    firstLine = True
-    seen = set()
+    path = '/home/django/elc/lpshop.csv'
+    #seen = set()
     
     if request.method == 'POST':        
         with open(path, 'rb') as f:
-            reader = csv.reader(f)
+            reader = csv.DictReader(f, delimiter=';')
             
             try:
                 for row in reader:
                     
-                    if firstLine == False:
-                        toAdd = LPReward()
-                        need = dict()
-                        index = 1
-                        reqItems = ''
-                        
-                        toAdd.corp = row[0]
-                        toAdd.itemName = row[1]
-                        toAdd.qty = row[2]
-                        toAdd.LPcost = row[3]
-                        toAdd.ISKcost = row[4]
-                        
-                        #print '** RAW row:', row
-                        
-                        # Parse required items list
-                        if (row[5] != '') & (row[5] != 'Reqired Items'):
-                            splitd = re.split(' x ', row[5])
-                            reqdCount = len(splitd) - 1
-                            #print '** splitd:', splitd
-                            
-                            # Get first requirement; key = item name, val = qty.
-                            if index == 1:
-                                need[splitd[index][0:splitd[index].rfind(' ')]] = splitd[index-1]
-                            
-                            # Loop through each of the remaining elements.
-                            while index < len(splitd) - 1:
-                                index = index + 1
-                                if ( index == len(splitd) - 1): # non-first/last items will have item name followed by qty of NEXT item
-                                    need[splitd[index]] = int(splitd[index-1][splitd[index-1].rfind(' '):len(splitd[index-1])])
-                                else:   # last item will be just the item name
-                                    need[splitd[index][0:splitd[index].rfind(' ')]] = int(splitd[index-1][splitd[index-1].rfind(' '):len(splitd[index-1])])
-                                    
-                            # Store req'd items' typeID followed by comma,
-                            # followed by qty of typeID, followed by comma.
-                            for key in need:
-                                reqItems = reqItems + str(invTypes.objects.get(typeName = key).typeID) + ','
-                                reqItems = reqItems + str(need[key]) + ','
-                            
-                            reqItems = reqItems[0:len(reqItems)-1]    
-                            toAdd.requiredItems = reqItems
-                                                    
-                            #print '** reqItems:', reqItems
-                        else:
-                            #print '** No required items found.'
-                            reqItems = ''
-                        
-                        #print '** toAdd: corp:%s, itemName:%s, qty:%s, LPcost:%s, ISKcost:%s, requiredItems:%s' % (toAdd.corp, toAdd.itemName, toAdd.qty, toAdd.LPcost, toAdd.ISKcost, toAdd.requiredItems)
-                        toAdd.save()
-                        
-                        if toAdd.itemName not in seen:
-                            seen.add(toAdd.itemName)
-                            
-                            try:
-                                x = invTypes.objects.get(typeName = toAdd.itemName)
-                                x.isLPreward = True
-                                x.save()
-                            except Exception as detail:
-                                print '!! ERROR in import_lp_data (typeName: "' + toAdd.itemName + '"):', detail
-                                continue
+                    toAdd = LP_Reward()
                     
-                    firstLine = False
+                    toAdd.LP_store_id = row['LoyaltyStoreItemId']
+                    toAdd.corp_id = evenames.objects.get(itemid=row['CorporationId'])
+                    toAdd.faction_id = evenames.objects.get(itemid=row['FactionId'])
+                    toAdd.LP_cost = row['LoyaltyPointCost']
+                    toAdd.ISK_cost = row['IskCost']
+                    toAdd.award_type_id = invTypes.objects.get(typeID=row['PrimaryAwardTypeId'])
+                    toAdd.award_qty = row['PrimaryAwardQuantity']
                     
+                    if row['Requirement1TypeId'] != 'NULL':
+                        toAdd.req_1_type_id = invTypes.objects.get(typeID=row['Requirement1TypeId'])
+                        toAdd.req_1_qty = row['Requirement1Quantity']
+                    
+                    if row['Requirement2TypeId'] != 'NULL':
+                        toAdd.req_2_type_id = invTypes.objects.get(typeID=row['Requirement2TypeId'])
+                        toAdd.req_2_qty = row['Requirement2Quantity']
+                    
+                    if row['Requirement3TypeId'] != 'NULL':
+                        toAdd.req_3_type_id = invTypes.objects.get(typeID=row['Requirement3TypeId'])
+                        toAdd.req_3_qty = row['Requirement3Quantity']
+                        
+                    if row['Requirement4TypeId'] != 'NULL':
+                        toAdd.req_4_type_id = invTypes.objects.get(typeID=row['Requirement4TypeId'])
+                        toAdd.req_4_qty = row['Requirement4Quantity']
+                        
+                    if row['Requirement5TypeId'] != 'NULL':
+                        toAdd.req_5_type_id = invTypes.objects.get(typeID=row['Requirement5TypeId'])
+                        toAdd.req_5_qty = row['Requirement5Quantity']
+                    
+                    print '** ADDING Corp:', str(toAdd.corp_id) + ', award_type_id:', str(toAdd.award_type_id)
+                    
+                    toAdd.save()
+                    
+                    try:
+                        x = invTypes.objects.get(typeID=row['PrimaryAwardTypeId'])
+                        x.isLPreward = True
+                        x.save()
+                    except Exception as e:
+                        print '!! Error accessing invTypes object or setting its "isLPreward" attr to True:', e
+                    
+                    #if toAdd.award_type_id not in seen:
+                    #    seen.add(toAdd.award_type_id)
+                    #    
+                    #    try:
+                    #        x = invTypes.objects.get(typeID=toAdd.award_type_id)
+                    #        x.isLPreward = True
+                    #        x.save()
+                    #    except Exception as detail:
+                    #        print '!! ERROR in import_lp_data - trying to add award to "seen" set (typeID: "' + str(toAdd.award_type_id) + '"):', detail
+                    #        continue                    
             except csv.Error, e:
                 print '!! import_lp_data: CSV error in file %s, line %d: %s' % (path, reader.line_num, e)
                 
@@ -963,7 +1054,7 @@ def import_lp_data(request):
 # View to display LP store-related details on a particular item.
 def lp_detail(request, type_id):
     try:
-        item = LPReward.objects.get(pk=type_id)
+        item = LP_Reward.objects.get(pk=type_id)
     except invTypes.DoesNotExist:
         raise Http404   # perhaps display a more informative page
     

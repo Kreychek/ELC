@@ -1,0 +1,11 @@
+{% extends "/home/django/templates/records/base.html" %}
+    {% block head %}
+        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen-{% if selected_theme %}{{ selected_theme }}{%else%}dark{% endif %}.css" />
+    {% endblock head %}
+    
+    {% block content %}
+        <h1>Loyalty Point Calculator</h1>
+        {% include "/home/django/templates/records/lp_calc4-dt2.html" %}
+        <br>
+        <font class="note">Other fees include the total cost of required items to make the purchase (e.g. T1 ammo to convert to faction ammo).</font>
+    {% endblock content %}

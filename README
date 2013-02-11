@@ -1,3 +1,10 @@
+ABOUT
+The Eve LP Calculator (ELC) is a Django project that performs market aggregation and optimizes the use of currencies in Eve Online.
+
+This particular release contains files for it to run in an Apache environment, hosted on Linux, although, like any Django project, it can be configured to run on a multitude of machines.
+
+More documentation is forthcoming.
+
 NOTES
 
 -main.py is not used anywhere.
