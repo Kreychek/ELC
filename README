@@ -3,6 +3,8 @@ The Eve LP Calculator (ELC) is a Django project that performs market aggregation
 
 This particular release contains files for it to run in an Apache environment, hosted on Linux, although, like any Django project, it can be configured to run on a multitude of machines.
 
+Some files containing sensitive information, like "elc/apache/settings_production.py" are not committed. See ".gitignore" for more ignored files.
+
 More documentation is forthcoming.
 
 NOTES
