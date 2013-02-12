@@ -672,8 +672,9 @@ def lp_search(request):
 #            (e.g. cost of buying T1 ammo to convert to faction ammo)
 # sellPrice: -determined by region & price stat (e.g. mean buy price)
 
-# Accepts iterables of typeID, regionID, and __priceStats. Also accepts corp_name.
-# Returns a dict containing table data each type, to fill an LPCalcResultsTable.
+# Accepts iterable of typeID, single regionID and single __priceStats.
+# Also accepts corp_name. Returns a dict containing table data each type,
+# to fill an LPCalcResultsTable.
 #
 # TO DO: -figure out other_fee (currently set to 0)
 #        -make sure prices/fees/etc are PER UNIT or PER PURCHASE SIZE and calc
@@ -693,25 +694,25 @@ def calculate_profits(items, region, stat, spendable, corp_id):
         item_name = item.typeName
         
         # name of the region we're selling it in
-        region_name = mapRegions.objects.get(regionID=region[x]).regionName
+        region_name = mapRegions.objects.get(regionID=region).regionName
         
         isk_per_lp = None
         profit = None
         
         # start limiting our query to typeID, regionID
-        q = MarketRecord.objects.filter(typeID__exact=item).filter(stationID__regionID__exact=region[x])
+        q = MarketRecord.objects.filter(typeID__exact=item).filter(stationID__regionID__exact=region)
         try:
-            if stat[x] == 'meanbp':
+            if stat == 'meanbp':
                 sell_price = q.filter(bid__exact=True).aggregate(tmp=Avg('price'))['tmp']
-            elif stat[x] == 'hbp':
+            elif stat == 'hbp':
                 sell_price = q.filter(bid__exact=True).aggregate(tmp=Max('price'))['tmp']
-            elif stat[x] == 'lbp':
+            elif stat == 'lbp':
                 sell_price = q.filter(bid__exact=True).aggregate(tmp=Min('price'))['tmp']
-            elif stat[x] == 'meansp':
+            elif stat == 'meansp':
                 sell_price = q.filter(bid__exact=False).aggregate(tmp=Avg('price'))['tmp']
-            elif stat[x] == 'hsp':
+            elif stat == 'hsp':
                 sell_price = q.filter(bid__exact=False).aggregate(tmp=Max('price'))['tmp']
-            elif stat[x] == 'lsp':
+            elif stat == 'lsp':
                 sell_price = q.filter(bid__exact=False).aggregate(tmp=Min('price'))['tmp']
             
             # We assume each LP-bought item will cost the same ISK, LP, and other_fee
@@ -831,28 +832,19 @@ def lp_calc(request):
                     item_list = request.GET.getlist('items')
                     print '** item_list:', item_list
                     
-                    LPCalcDetailsFormSet = formset_factory(LPCalcDetails,
-                                              extra=len(item_list))
-                    
-                    formset = LPCalcDetailsFormSet()
-                    count = 0
+                    form = LPCalcDetails()
                     
                     spendable = int(request.GET.get('spendable'))
                     
                     print '** spendable:', spendable
                     
-                    # Get the item name into each form; use as label on render.
-                    for form in formset:
-                        form.item_name = invTypes.objects.get(pk=item_list[count]).typeName
-                        count = count + 1
-                        
                     if 'theme' in request.session:
                         selected_theme = request.session['theme']
                     else:
                         selected_theme = None
                     
                     return render_to_response('records/lp_calc3.html',
-                                              {'formset': formset,
+                                              {'form': form,
                                                'items': item_list,
                                                'spendable': spendable,
                                                'corp_id': corp_id.itemid,
@@ -873,27 +865,32 @@ def lp_calc(request):
                 print '----- ** ON STEP 4...'
                 
                 # Recreate the formset as it was made for this particular query
-                LPCalcDetailsFormSet = formset_factory(LPCalcDetails,
-                                          extra=request.GET.get('TOTAL_FORMS'))
-                formset = LPCalcDetailsFormSet(request.GET)
+                #LPCalcDetailsFormSet = formset_factory(LPCalcDetails,
+                #                          extra=request.GET.get('TOTAL_FORMS'))
+                #formset = LPCalcDetailsFormSet(request.GET)
                 
-                if formset.is_valid():
-                    print '** Formset is valid:', formset.data
+                details_form = LPCalcDetails(request.GET)
+                
+                if details_form.is_valid():
+                    print '** details_form is valid:', details_form.data
                     
                     items = request.GET.get('items')
                     # -1 b/c last semi-colon adds an empty element
                     item_count = len(items.split(';')) - 1
                     item_list = items.split(';')[0:item_count]
                     
-                    form_count = int(request.GET.get('form-TOTAL_FORMS'))
+                    #form_count = int(request.GET.get('form-TOTAL_FORMS'))
+                    #
+                    #region = dict()
+                    #stat = dict()
+                    #for x in range(0, form_count):
+                    #    region[x] = request.GET.get('form-' + str(x)
+                    #                                + '-region')
+                    #    stat[x] = request.GET.get('form-' + str(x)
+                    #                              + '-stat')
                     
-                    region = dict()
-                    stat = dict()
-                    for x in range(0, form_count):
-                        region[x] = request.GET.get('form-' + str(x)
-                                                    + '-region')
-                        stat[x] = request.GET.get('form-' + str(x)
-                                                  + '-stat')
+                    region = request.GET.get('region')
+                    stat = request.GET.get('stat')
                         
                     spendable = request.GET.get('spendable')
                     
@@ -921,7 +918,13 @@ def lp_calc(request):
                                               {'table': table,
                                'selected_theme': selected_theme},
                                               context_instance=RequestContext(request))
+                else:
+                    print '** Step 3 details_form was invalid:', details_form.errors
                     
+                    for field in details_form:
+                        print field.errors
+                        
+                    print '  Non-field errors:', details_form.non_field_errors()
     else:
         print '** NO GET.'
         form = LPCalcStep1()

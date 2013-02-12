@@ -1,15 +1,12 @@
 {% extends "/home/django/templates/records/base.html" %}
     {% block content %}
         <h1>Loyalty Point Calculator</h1>
-        <h2>Step 3 of 3</h2>
+        <h2>Step 3 of 3</h2><br>
         <form method="get" action="">
-            {{ formset.management_form }}
-            <table>
-                {% for form in formset %}
-                    {{ form.item_name }}
-                    {{ form.as_p }}<br>
-                {% endfor %}
-            </table>
+            <h3>Region</h3>
+            {{ form.region }}<br><br>
+            <h3>Price Statistic</h3>
+            {{ form.stat }}<br><br>
             <input type="submit" value="Submit">
             <input type=hidden name='items' value='{% for i in items %}{{ i|safe }};{% endfor %}'/>
             <input type=hidden name='spendable' value='{{ spendable }}'/>
