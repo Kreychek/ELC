@@ -574,9 +574,9 @@ def search(request):
                                'selected_theme': selected_theme},
                               context_instance=RequestContext(request))
 
-# View to search LP store rewards.
+# View to search LP store rewards and display which corp sells them and the cost
+# in ISK, LP, and req'd items.
 def lp_search(request):
-    start = time()
     query_string = ''
     found_entries = None
     results = ''

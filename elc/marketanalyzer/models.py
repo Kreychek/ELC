@@ -345,7 +345,10 @@ class MarketRecord(models.Model):
     lastUpdated = models.DateTimeField("Entry updated")
     
     def __unicode__(self):
-        return self.typeID.typeName
+        if self.typeID:
+            return self.typeID.typeName
+        else:
+            return None
     
     def was_updated_today(self):
         return self.lastUpdated == datetime.date.today()
